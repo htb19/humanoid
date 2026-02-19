@@ -29,7 +29,7 @@
     
     <include>
       <name>aruco box</name>
-      <uri>model://aruco box 1</uri>
+      <uri>model://aruco box</uri>
       <pose>0.0 0.85 1.05 0 0 -1.570796326794</pose>
       <static>true</static>
     </include>

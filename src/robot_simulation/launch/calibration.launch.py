@@ -17,7 +17,27 @@ def generate_launch_description():
             'config_file': 'calibration_sim_config.yaml'
         }.items()
     )
+    
+    handeye_calibration_start_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([
+                FindPackageShare('camera_calibration'),
+                'launch',
+                'start.launch.py'
+            ])
+        ),
+        launch_arguments={
+            'config_file': PathJoinSubstitution([
+                FindPackageShare('camera_calibration'),
+                'config',
+                'head_cam_handeye_calibration.yaml'
+            ])
+        }.items()
+    )
 
     return LaunchDescription([
-        gazebo_launch
+        gazebo_launch,
+        handeye_calibration_start_launch,
     ])
+    
+    

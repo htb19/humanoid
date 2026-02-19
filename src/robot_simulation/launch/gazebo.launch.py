@@ -19,6 +19,7 @@ from launch_ros.actions import Node, SetParameter
 from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
 import os, yaml
+from moveit_configs_utils import MoveItConfigsBuilder
 
 def collect_enabled(config, prefix=''):
     """扁平化收集所有启用的节点名（自动处理all_disable）"""
@@ -51,6 +52,7 @@ def launch_setup(context: LaunchContext):
             "config",
             config_file
         )
+    print(f"Config path: {config_path}")
     
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
@@ -79,11 +81,22 @@ def launch_setup(context: LaunchContext):
         config['simulation']['world_file']
     ])
     
+    moveit_config = MoveItConfigsBuilder(
+        "humanoid",
+        package_name="robot_moveit_config"
+    ).to_moveit_configs()
+    
     rviz2_config = PathJoinSubstitution([
         pkg_share,
         "rviz",
         "simulation.rviz"
     ])
+    
+    rviz2_parameters = [
+        moveit_config.planning_pipelines,
+        moveit_config.robot_description_kinematics,
+        moveit_config.joint_limits,
+    ]
     
     # ============ 2. 核心节点定义 ============
     # (1) 启动空世界Gazebo Sim
@@ -213,7 +226,8 @@ def launch_setup(context: LaunchContext):
         executable="rviz2",
         name="rviz2",
         output="screen",
-        arguments=["-d", rviz2_config]
+        arguments=["-d", rviz2_config],
+        parameters=rviz2_parameters,
     )
     
     rqt = Node(
