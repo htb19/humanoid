@@ -6,25 +6,29 @@ controller_manager:
     right_arm_controller:
       type: joint_trajectory_controller/JointTrajectoryController
 
-
     left_arm_controller:
       type: joint_trajectory_controller/JointTrajectoryController
-
 
     left_gripper_controller:
       type: joint_trajectory_controller/JointTrajectoryController
 
-
     right_gripper_controller:
       type: joint_trajectory_controller/JointTrajectoryController
-
 
     neck_controller:
       type: joint_trajectory_controller/JointTrajectoryController
 
-
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
+
+# ===== ADD THIS SECTION =====
+#gazebo_ros2_control:
+#  ros__parameters:
+#    hardware:
+#      type: gazebo_ros2_control/GazeboSystem  # For Gazebo Classic
+      # OR try this if you have gz-ros2-control installed:
+      # type: gz_ros2_control/GazeboSimSystem
+# ============================
 
 right_arm_controller:
   ros__parameters:
@@ -41,6 +45,7 @@ right_arm_controller:
     state_interfaces:
       - position
       - velocity
+
 left_arm_controller:
   ros__parameters:
     joints:
@@ -56,6 +61,7 @@ left_arm_controller:
     state_interfaces:
       - position
       - velocity
+
 left_gripper_controller:
   ros__parameters:
     joints:
@@ -66,6 +72,7 @@ left_gripper_controller:
     state_interfaces:
       - position
       - velocity
+
 right_gripper_controller:
   ros__parameters:
     joints:
@@ -76,6 +83,7 @@ right_gripper_controller:
     state_interfaces:
       - position
       - velocity
+
 neck_controller:
   ros__parameters:
     joints:

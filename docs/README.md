@@ -15,8 +15,8 @@
 ~~~
 **安装moveit**
 ~~~
-  sudo apt install ross-humble-moveit
-~~~
+  sudo apt install ros-humble-moveit
+ ~~~
  
 **安装ros_control**
 ~~~
