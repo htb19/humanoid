@@ -18,6 +18,11 @@
   sudo apt install ros-humble-moveit
  ~~~
  
+**安装ros_control**
+~~~
+  sudo apt install ros-humble-ros2-control ros-humble-ros2-controllers
+~~~
+
 # Robot Commander
 ```xml
 ros2 launch robot_commander robot_moveit.launch.xml //启动robot_moveit
@@ -59,19 +64,42 @@ ros2 topic pub -1 /left_pose_command robot_interfaces/msg/PoseCommand "{x: 0.0, 
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="humanoid">
     <xacro:arg name="initial_positions_file" default="$(find robot_description)/config/initial_positions.yaml" />
+    <xacro:arg name="use_gazebo" default="false"/>
 
     <!-- Import humanoid urdf file -->
     <xacro:include filename="humanoid.urdf" />
+    
+    <xacro:include filename="camera_optical_link.xacro"/>
+    <xacro:camera_optical_link/>
 
-    <!-- Import control_xacro -->
-    <xacro:include filename="humanoid.ros2_control.xacro" />
-
-
-    <xacro:humanoid_ros2_control name="FakeSystem" initial_positions_file="$(arg initial_positions_file)"/>
+    <xacro:if value="$(arg use_gazebo)">
+      <!-- gazebo 仿真 -->
+      <xacro:include filename="humanoid.gazebo.ros2_control.xacro" />
+      <xacro:humanoid_gazebo_ros2_control name="GazeboSystem" initial_positions_file="$(arg initial_positions_file)"/>
+      
+      <!-- 包含 Gazebo 配置 -->
+      <xacro:include filename="humanoid.gazebo.xacro"/>
+      <xacro:robot_gazebo/>
+      
+    </xacro:if>
+    
+    <xacro:unless value="$(arg use_gazebo)">
+      <!-- 实机 -->
+      
+      <!-- Import control_xacro -->
+      <xacro:include filename="humanoid.ros2_control.xacro" />
+      
+      <xacro:humanoid_ros2_control name="FakeSystem" initial_positions_file="$(arg initial_positions_file)"/>
+    </xacro:unless>
 
 </robot>
 ```
-**humanoid.urdf包含sw导出的机器人模型文件，humanoid.ros2_control.xacro为ros2_control的配置文件**
+
+* humanoid.urdf包含sw导出的机器人模型文件，
+* camera_optical_link.xacro为相机坐标系修改文件
+* humanoid.ros2_control.xacro为ros2_control的配置文件
+* humanoid.gazebo.ros2_control.xacro为gazebo的仿真文件
+* humanoid.gazebo.xacro为gazebo的配置文件
 
 # Robot Moveit Config
 插件生成文件，保留方便后续直接在该文件上使用插件进行部分修改。
