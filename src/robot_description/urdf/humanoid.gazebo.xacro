@@ -20,8 +20,8 @@
         <camera>
           <horizontal_fov>1.0471975512</horizontal_fov>  <!-- 60度 -->
           <image>
-            <width>640</width>
-            <height>480</height>
+            <width>1280</width>
+            <height>960</height>
             <format>R8G8B8</format>  <!-- RGB8 -->
           </image>
           <clip>
