@@ -4,17 +4,65 @@
     <link name="link">
       <pose>0 0 0 0 0 0</pose>
 
-        <visual name="visual">
-          <geometry>
-            <mesh><uri>model://desk/meshes/desk.obj</uri></mesh>
-          </geometry>
-        </visual>
-        
-        <collision name="collision">
-          <geometry>
-            <mesh><uri>model://desk/meshes/desk.obj</uri></mesh>
-          </geometry>
-        </collision>
+      <visual name="visual">
+        <geometry>
+          <mesh><uri>model://desk/meshes/desk.obj</uri></mesh>
+        </geometry>
+      </visual>
+      
+      <!-- <collision name="collision">
+        <geometry>
+          <mesh><uri>model://desk/meshes/desk.obj</uri></mesh>
+        </geometry>
+      </collision> -->
+      
+      <!-- 碰撞部分：用简单盒子近似 -->
+      <!-- 桌面：扁盒，覆盖桌面区域 -->
+      <collision name="tabletop">
+        <pose>-0.014 0 0.530 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.491 0.844 0.043</size>   <!-- 长(x) × 宽(y) × 高(z) -->
+          </box>
+        </geometry>
+      </collision>
+
+      <!-- 四条桌腿（延伸至桌面底部） -->
+      <collision name="leg_front_left">
+        <pose>-0.239 0.399 0.254 0 0 0</pose>   <!-- 中心高度 = 0.508/2 -->
+        <geometry>
+          <box>
+            <size>0.08 0.08 0.508</size>        <!-- 稍粗一点，确保覆盖腿实际位置 -->
+          </box>
+        </geometry>
+      </collision>
+
+      <collision name="leg_front_right">
+        <pose>0.211 0.399 0.254 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.08 0.08 0.508</size>
+          </box>
+        </geometry>
+      </collision>
+
+      <collision name="leg_back_left">
+        <pose>-0.239 -0.399 0.254 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.08 0.08 0.508</size>
+          </box>
+        </geometry>
+      </collision>
+
+      <collision name="leg_back_right">
+        <pose>0.211 -0.399 0.254 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.08 0.08 0.508</size>
+          </box>
+        </geometry>
+      </collision>
 
     </link>
   </model>
