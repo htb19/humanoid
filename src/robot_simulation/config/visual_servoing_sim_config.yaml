@@ -14,17 +14,20 @@ nodes_enable:
   # ros2控制器
   ros2_controllers:
     all_disable: false
-    neck_controller: true
+    neck_controller: false
     right_arm_controller: true
-    right_gripper_controller: true
+    right_gripper_controller: false
     left_arm_controller: true
-    left_gripper_controller: true
+    left_gripper_controller: false
   
   # 话题桥接
   topic_bridge: true
   
   # moveit
-  moveit: true
+  moveit: 
+    all_disable: false
+    move_group: true
+    moveit_servo: true
   
   # 工具
   tools:
@@ -33,7 +36,7 @@ nodes_enable:
   # gui应用，未安装可关闭
   GUI_APP:
     all_disable: false
-    rviz2: false
+    rviz2: true
     rqt: false
 
   
