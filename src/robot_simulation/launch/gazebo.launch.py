@@ -163,7 +163,12 @@ def launch_setup(context: LaunchContext):
     neck_controller = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["neck_controller", "--controller-manager", "/controller_manager"],
+        arguments=[
+            "neck_controller",
+            "--controller-manager", "/controller_manager",
+            "--controller-manager-timeout", "40",
+            "--service-call-timeout", "40",
+        ],
         output="screen"
     )
     
@@ -171,7 +176,12 @@ def launch_setup(context: LaunchContext):
     right_arm_controller = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["right_arm_controller", "--controller-manager", "/controller_manager"],
+        arguments=[
+            "right_arm_controller",
+            "--controller-manager", "/controller_manager",
+            "--controller-manager-timeout", "40",
+            "--service-call-timeout", "40",
+        ],
         output="screen"
     )
     
@@ -179,7 +189,12 @@ def launch_setup(context: LaunchContext):
     right_gripper_controller = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["right_gripper_controller", "--controller-manager", "/controller_manager"],
+        arguments=[
+            "right_gripper_controller",
+             "--controller-manager", "/controller_manager",
+             "--controller-manager-timeout", "40",
+             "--service-call-timeout", "40",
+        ],
         output="screen"
     )
     
@@ -187,7 +202,12 @@ def launch_setup(context: LaunchContext):
     left_arm_controller = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["left_arm_controller", "--controller-manager", "/controller_manager"],
+        arguments=[
+            "left_arm_controller",
+            "--controller-manager", "/controller_manager",
+            "--controller-manager-timeout", "40",
+            "--service-call-timeout", "40",
+        ],
         output="screen"
     )
     
@@ -195,7 +215,12 @@ def launch_setup(context: LaunchContext):
     left_gripper_controller = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["left_gripper_controller", "--controller-manager", "/controller_manager"],
+        arguments=[
+            "left_gripper_controller",
+            "--controller-manager", "/controller_manager",
+            "--controller-manager-timeout", "40",
+            "--service-call-timeout", "40",
+        ],
         output="screen"
     )
     
@@ -241,12 +266,18 @@ def launch_setup(context: LaunchContext):
         parameters=[{"use_sim_time": False}]
     )
     
-    moveit = IncludeLaunchDescription(
+    move_group = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             FindPackageShare('robot_moveit_config'),
             '/launch/move_group.launch.py'
         ]),
-        # launch_arguments={'use_sim_time': 'true'}.items()
+    )
+    
+    moveit_servo = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+            FindPackageShare('servo_control'),
+            '/launch/servo.launch.py'
+        ]),
     )
     
     # ============ 4. 启动流程 ============
@@ -273,7 +304,8 @@ def launch_setup(context: LaunchContext):
         # 话题桥接
         'topic_bridge': topic_bridge,
         # moveit
-        'moveit': moveit,
+        'move_group': move_group,
+        'moveit_servo': moveit_servo,
         # GUI-APP
         'rviz2': rviz2,
         'rqt': rqt,
