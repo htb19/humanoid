@@ -359,7 +359,7 @@ public:
             state.buf[base + 2] = static_cast<uint8_t>(cnt & 0xFF);
         }
 
-        return driver_.sendData(CAN_ID_PDO_MULTI, 0, 1, 1,
+        return driver_.sendData(CAN_ID_PDO_MULTI, 0, 1, 0,
                                 channel, state.buf, 64);
         
     }
@@ -385,7 +385,7 @@ public:
     bool sendSync(int channel)
     {
         uint8_t empty[1] = {0};
-        if (!driver_.sendData(CAN_ID_SYNC, 0, 1, 1, channel, empty, 1))
+        if (!driver_.sendData(CAN_ID_SYNC, 0, 1, 0, channel, empty, 1))
             return false;
         return true;   
     }
@@ -656,7 +656,7 @@ public:
         uint8_t buf[7];
         encodeSingleAxisCmd(cmd, buf);
         if (!driver_.sendData(CAN_ID_PDO_SINGLE_BASE | m.dev_id,
-                          0, 1, 1, m.channel, buf, 7))
+                          0, 1, 0, m.channel, buf, 7))
             return false;
         return true;
     }
@@ -675,7 +675,7 @@ private:
         uint8_t buf[7];
         encodeSingleAxisCmd(cmd, buf);
         return driver_.sendData(CAN_ID_PDO_SINGLE_BASE | static_cast<uint32_t>(dev_id),
-                                0, 1, 1, channel, buf, 7);
+                                0, 1, 0, channel, buf, 7);
     }
 
     std::vector<int> usedChannels() const
