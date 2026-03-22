@@ -19,6 +19,7 @@ from launch_ros.actions import Node, SetParameter
 from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
 import os, yaml
+from moveit_configs_utils import MoveItConfigsBuilder
 
 def collect_enabled(config, prefix=''):
     """扁平化收集所有启用的节点名（自动处理all_disable）"""
@@ -51,6 +52,7 @@ def launch_setup(context: LaunchContext):
             "config",
             config_file
         )
+    print(f"Config path: {config_path}")
     
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
@@ -79,11 +81,22 @@ def launch_setup(context: LaunchContext):
         config['simulation']['world_file']
     ])
     
+    moveit_config = MoveItConfigsBuilder(
+        "humanoid",
+        package_name="robot_moveit_config"
+    ).to_moveit_configs()
+    
     rviz2_config = PathJoinSubstitution([
         pkg_share,
         "rviz",
         "simulation.rviz"
     ])
+    
+    rviz2_parameters = [
+        moveit_config.planning_pipelines,
+        moveit_config.robot_description_kinematics,
+        moveit_config.joint_limits,
+    ]
     
     # ============ 2. 核心节点定义 ============
     # (1) 启动空世界Gazebo Sim
@@ -150,7 +163,12 @@ def launch_setup(context: LaunchContext):
     neck_controller = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["neck_controller", "--controller-manager", "/controller_manager"],
+        arguments=[
+            "neck_controller",
+            "--controller-manager", "/controller_manager",
+            "--controller-manager-timeout", "40",
+            "--service-call-timeout", "40",
+        ],
         output="screen"
     )
     
@@ -158,7 +176,12 @@ def launch_setup(context: LaunchContext):
     right_arm_controller = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["right_arm_controller", "--controller-manager", "/controller_manager"],
+        arguments=[
+            "right_arm_controller",
+            "--controller-manager", "/controller_manager",
+            "--controller-manager-timeout", "40",
+            "--service-call-timeout", "40",
+        ],
         output="screen"
     )
     
@@ -166,7 +189,12 @@ def launch_setup(context: LaunchContext):
     right_gripper_controller = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["right_gripper_controller", "--controller-manager", "/controller_manager"],
+        arguments=[
+            "right_gripper_controller",
+             "--controller-manager", "/controller_manager",
+             "--controller-manager-timeout", "40",
+             "--service-call-timeout", "40",
+        ],
         output="screen"
     )
     
@@ -174,7 +202,12 @@ def launch_setup(context: LaunchContext):
     left_arm_controller = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["left_arm_controller", "--controller-manager", "/controller_manager"],
+        arguments=[
+            "left_arm_controller",
+            "--controller-manager", "/controller_manager",
+            "--controller-manager-timeout", "40",
+            "--service-call-timeout", "40",
+        ],
         output="screen"
     )
     
@@ -182,7 +215,12 @@ def launch_setup(context: LaunchContext):
     left_gripper_controller = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["left_gripper_controller", "--controller-manager", "/controller_manager"],
+        arguments=[
+            "left_gripper_controller",
+            "--controller-manager", "/controller_manager",
+            "--controller-manager-timeout", "40",
+            "--service-call-timeout", "40",
+        ],
         output="screen"
     )
     
@@ -213,7 +251,8 @@ def launch_setup(context: LaunchContext):
         executable="rviz2",
         name="rviz2",
         output="screen",
-        arguments=["-d", rviz2_config]
+        arguments=["-d", rviz2_config],
+        parameters=rviz2_parameters,
     )
     
     rqt = Node(
@@ -227,12 +266,18 @@ def launch_setup(context: LaunchContext):
         parameters=[{"use_sim_time": False}]
     )
     
-    moveit = IncludeLaunchDescription(
+    move_group = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             FindPackageShare('robot_moveit_config'),
             '/launch/move_group.launch.py'
         ]),
-        # launch_arguments={'use_sim_time': 'true'}.items()
+    )
+    
+    moveit_servo = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+            FindPackageShare('servo_control'),
+            '/launch/servo.launch.py'
+        ]),
     )
     
     # ============ 4. 启动流程 ============
@@ -259,7 +304,8 @@ def launch_setup(context: LaunchContext):
         # 话题桥接
         'topic_bridge': topic_bridge,
         # moveit
-        'moveit': moveit,
+        'move_group': move_group,
+        'moveit_servo': moveit_servo,
         # GUI-APP
         'rviz2': rviz2,
         'rqt': rqt,

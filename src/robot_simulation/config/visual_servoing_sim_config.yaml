@@ -1,0 +1,42 @@
+# === 仿真配置 ===
+# PS：启动较慢，需要耐心等待
+simulation:
+  world_file: "worlds/visual_servoing.sdf"
+
+# === 节点启动选择 ===
+# 1.书写顺序即为启动顺序（深度优先）
+# 2.all_disable缺省为false
+# 3.节点缺省为false
+# 4.非叶子键名任意
+nodes_enable:
+  all_disable: false
+  
+  # ros2控制器
+  ros2_controllers:
+    all_disable: false
+    neck_controller: false
+    right_arm_controller: true
+    right_gripper_controller: false
+    left_arm_controller: true
+    left_gripper_controller: false
+  
+  # 话题桥接
+  topic_bridge: true
+  
+  # moveit
+  moveit: 
+    all_disable: false
+    move_group: true
+    moveit_servo: true
+  
+  # 工具
+  tools:
+    all_disable: true
+  
+  # gui应用，未安装可关闭
+  GUI_APP:
+    all_disable: false
+    rviz2: true
+    rqt: false
+
+  

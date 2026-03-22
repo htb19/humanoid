@@ -1,0 +1,24 @@
+# 只允许字符串
+aruco_detection:
+  marker_id: "582"
+  marker_size: "0.2"
+  image_is_rectified: "false"
+  reference_frame: ''
+  camera_frame: right_camera_optical_link
+  marker_frame: aruco_marker
+  corner_refinement: LINES
+  camera_info_topic: /right_camera/camera_info
+  image_topic: /right_camera/image
+
+pose_publisher:
+  source_frame: base_link
+  target_frame: right_camera_link
+  pose_topic: /end_effector_pose
+  publish_rate: "20.0"
+
+handeye_calibration:
+  camera_pose_topic: /aruco_single/pose
+  gripper_pose_topic: /end_effector_pose
+  gripper_frame: right_camera_link
+  camera_frame: right_camera_optical_link
+  output_pose_topic: /cam2gripper_pose

@@ -24,7 +24,10 @@ nodes_enable:
   topic_bridge: true
   
   # moveit
-  moveit: true
+  moveit: 
+    all_disable: false
+    move_group: false     # 运动规划器
+    moveit_servo: false   # 伺服控制器
   
   # 工具
   tools:
