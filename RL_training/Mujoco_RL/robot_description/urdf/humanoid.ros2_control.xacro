@@ -1,0 +1,181 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:macro name="humanoid_ros2_control" params="name initial_positions_file">
+        <xacro:property name="initial_positions" value="${xacro.load_yaml(initial_positions_file)['initial_positions']}"/>
+
+        <ros2_control name="${name}" type="system">
+            <hardware>
+                <!-- By default, set up controllers for simulation. This won't work on real hardware -->
+                <plugin>mock_components/GenericSystem</plugin>
+                <!-- <plugin>robot_hardware/HumanoidRobotHardware</plugin> -->
+                <!-- <param name="lib_path">/home/htb/human_ws/src/robot_hardware/lib/libcontrolcanfd.so</param>
+                <param name="device_type">USBCANFD_200U</param>
+                <param name="device_index">0</param>
+                <param name="abit_baud">1000000</param>
+                <param name="dbit_baud">5000000</param> -->
+            </hardware>
+            <joint name="right_base_pitch_joint">
+                <!-- <param name="dev_id">1</param>
+                <param name="channel">0</param> -->
+
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['right_base_pitch_joint']}</param>
+                </state_interface>
+                <state_interface name="velocity"/>
+            </joint>
+            <joint name="right_shoulder_roll_joint">
+                <!-- <param name="dev_id">2</param>
+                <param name="channel">0</param> -->
+
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['right_shoulder_roll_joint']}</param>
+                </state_interface>
+                <state_interface name="velocity"/>
+            </joint>
+            <joint name="right_shoulder_yaw_joint">
+                <!-- <param name="dev_id">3</param>
+                <param name="channel">0</param> -->
+
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['right_shoulder_yaw_joint']}</param>
+                </state_interface>
+                <state_interface name="velocity"/>
+            </joint>
+            <joint name="right_elbow_pitch_joint">
+                <!-- <param name="dev_id">4</param>
+                <param name="channel">0</param> -->
+
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['right_elbow_pitch_joint']}</param>
+                </state_interface>
+                <state_interface name="velocity"/>
+            </joint>
+            <joint name="right_wrist_pitch_joint">
+                <!-- <param name="dev_id">5</param>
+                <param name="channel">0</param> -->
+
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['right_wrist_pitch_joint']}</param>
+                </state_interface>
+                <state_interface name="velocity"/>
+            </joint>
+            <joint name="right_wrist_yaw_joint">
+                <!-- <param name="dev_id">6</param>
+                <param name="channel">0</param> -->  
+
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['right_wrist_yaw_joint']}</param>
+                </state_interface>
+                <state_interface name="velocity"/>
+            </joint>
+            <joint name="left_base_pitch_joint">
+                <!-- <param name="dev_id">1</param>
+                <param name="channel">1</param> -->
+
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['left_base_pitch_joint']}</param>
+                </state_interface>
+                <state_interface name="velocity"/>
+            </joint>
+            <joint name="left_shoulder_roll_joint">
+                <!-- <param name="dev_id">2</param>
+                <param name="channel">1</param> -->           
+
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['left_shoulder_roll_joint']}</param>
+                </state_interface>
+                <state_interface name="velocity"/>
+            </joint>
+            <joint name="left_shoulder_yaw_joint">
+                <!-- <param name="dev_id">3</param>
+                <param name="channel">1</param> -->
+
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['left_shoulder_yaw_joint']}</param>
+                </state_interface>
+                <state_interface name="velocity"/>
+            </joint>
+            <joint name="left_elbow_pitch_joint">
+                <!-- <param name="dev_id">4</param>
+                <param name="channel">1</param> -->   
+
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['left_elbow_pitch_joint']}</param>
+                </state_interface>
+                <state_interface name="velocity"/>
+            </joint>
+            <joint name="left_wrist_pitch_joint">
+                <!-- <param name="dev_id">5</param>
+                <param name="channel">1</param> -->
+
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['left_wrist_pitch_joint']}</param>
+                </state_interface>
+                <state_interface name="velocity"/>
+            </joint>
+            <joint name="left_wrist_yaw_joint">
+                <!-- <param name="dev_id">6</param>
+                <param name="channel">1</param> -->
+
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['left_wrist_yaw_joint']}</param>
+                </state_interface>
+                <state_interface name="velocity"/>
+            </joint>
+            <joint name="left_gripper1_joint">
+                <!-- <param name="dev_id">7</param>
+                <param name="channel">0</param> -->     
+
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['left_gripper1_joint']}</param>
+                </state_interface>
+                <state_interface name="velocity"/>
+            </joint>
+            <joint name="right_gripper1_joint">
+                <!-- <param name="dev_id">7</param>
+                <param name="channel">1</param> -->    
+
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['right_gripper1_joint']}</param>
+                </state_interface>
+                <state_interface name="velocity"/>
+            </joint>
+            <joint name="neck_pitch_joint">
+                <!-- <param name="dev_id">8</param>
+                <param name="channel">0</param> -->    
+
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['neck_pitch_joint']}</param>
+                </state_interface>
+                <state_interface name="velocity"/>
+            </joint>
+            <joint name="neck_yaw_joint">
+
+                <!-- <param name="dev_id">8</param>
+                <param name="channel">1</param> -->              
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['neck_yaw_joint']}</param>
+                </state_interface>
+                <state_interface name="velocity"/>
+            </joint>
+
+        </ros2_control>
+    </xacro:macro>
+</robot>
+
