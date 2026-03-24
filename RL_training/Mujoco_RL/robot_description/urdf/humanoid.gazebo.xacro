@@ -1,0 +1,93 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="robot_gazebo">
+
+    <gazebo>
+      <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+        <parameters>$(find robot_description)/config/ros2_controllers.yaml</parameters>
+      </plugin>
+    </gazebo>
+    
+    <!-- 头部深度相机（RGB-D） -->
+    <gazebo reference="head_camera_optical_link">
+      <sensor name="head_camera" type="rgbd_camera">
+        <pose>0 0 0 0 -1.5708 1.5708</pose>
+        <always_on>1</always_on>
+        <update_rate>30</update_rate>
+        <topic>head_camera</topic>
+        <gz_frame_id>head_camera_optical_link</gz_frame_id>
+        
+        <camera>
+          <horizontal_fov>1.0471975512</horizontal_fov>  <!-- 60度 -->
+          <image>
+            <width>1280</width>
+            <height>960</height>
+            <format>R8G8B8</format>  <!-- RGB8 -->
+          </image>
+          <clip>
+            <near>0.1</near>   <!-- 最小探测距离 0.3米 -->
+            <far>10.0</far>    <!-- 最大探测距离 10米 -->
+          </clip>
+        </camera>
+        <point_cloud>true</point_cloud>
+      </sensor>
+    </gazebo>
+    
+    <!-- 右手相机（RGB） -->
+    <gazebo reference="left_camera_optical_link">
+      <sensor name="right_camera" type="camera">
+        <pose>0 0 0 0 -1.5708 1.5708</pose>
+        <always_on>1</always_on>
+        <update_rate>30</update_rate>
+        <topic>right_camera/image</topic>
+        <gz_frame_id>right_camera_optical_link</gz_frame_id>
+        
+        <camera>
+          <horizontal_fov>1.0471975512</horizontal_fov>  <!-- 60度 -->
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.1</near>
+            <far>10.0</far>
+          </clip>
+        </camera>
+      </sensor>
+    </gazebo>
+    
+    <!-- 左手相机（RGB） -->
+    <gazebo reference="left_camera_optical_link">
+      <sensor name="left_camera" type="camera">
+        <pose>0 0 0 1.5708 -1.5708 0</pose>
+        <always_on>1</always_on>
+        <update_rate>30</update_rate>
+        <topic>left_camera/image</topic>
+        <gz_frame_id>left_camera_optical_link</gz_frame_id>
+        
+        <camera>
+          <horizontal_fov>1.0471975512</horizontal_fov>  <!-- 60度 -->
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.1</near>
+            <far>10.0</far>
+          </clip>
+        </camera>
+      </sensor>
+    </gazebo>
+    
+    <!-- 传感器插件 -->
+    <gazebo>
+      <plugin filename="libignition-gazebo-sensors-system.so"
+                  name="ignition::gazebo::systems::Sensors">
+        <render_engine>ogre2</render_engine>
+      </plugin>
+    </gazebo>
+    
+  </xacro:macro>
+</robot>

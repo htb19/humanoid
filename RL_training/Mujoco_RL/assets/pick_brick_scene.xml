@@ -1,0 +1,3 @@
+<mujoco model="pick_brick_scene">
+  <include file="humanoid_right_arm.xml"/>
+</mujoco>
