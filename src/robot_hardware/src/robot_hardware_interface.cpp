@@ -218,12 +218,12 @@ HumanoidRobotHardware::on_activate(const rclcpp_lifecycle::State & /*previous_st
 {
     RCLCPP_INFO(rclcpp::get_logger("HumanoidRobotHardware"), "on_activate");
 
-    if (!mgr_->enableAll())
-    {
-        RCLCPP_ERROR(rclcpp::get_logger("HumanoidRobotHardware"),
-                     "enableAll() failed.");
-        return hardware_interface::CallbackReturn::ERROR;
-    }
+    // if (!mgr_->enableAll())
+    // {
+    //     RCLCPP_ERROR(rclcpp::get_logger("HumanoidRobotHardware"),
+    //                  "enableAll() failed.");
+    //     return hardware_interface::CallbackReturn::ERROR;
+    // }
 
     // 等待驱动器完成状态机切换
     std::this_thread::sleep_for(std::chrono::milliseconds(500));

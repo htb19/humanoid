@@ -1,4 +1,6 @@
 <launch> 
+    <arg name="use_simulation" default="false"/>
+    
     <let name="urdf_path"
         value="$(find-pkg-share robot_description)/urdf/humanoid.urdf.xacro" />
     <let name="rviz_config_path"
@@ -8,13 +10,13 @@
 
     <node pkg="robot_state_publisher" exec="robot_state_publisher">
         <param name="robot_description"
-            value="$(command 'xacro $(var urdf_path)')" />
+            value="$(command 'xacro $(var urdf_path) use_simulation:=$(var use_simulation)')" />
         <param name="publish_frequency" value="1000.0" />
     </node>
 
     <node pkg="controller_manager" exec="ros2_control_node">
         <param name="robot_description"
-           value="$(command 'xacro $(var urdf_path)')" />
+           value="$(command 'xacro $(var urdf_path) use_simulation:=$(var use_simulation)')" />
         <param from="$(var roscontrollers_config_path)"/>
     </node>
 

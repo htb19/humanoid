@@ -25,8 +25,9 @@
 
 # Robot Commander
 ```xml
-ros2 launch robot_commander robot_moveit.launch.xml //启动robot_moveit
-ros2 run robot_commander commander //启动订阅的相关话题
+ros2 launch robot_commander robot_moveit.launch.xml //启动robot_moveit实机模式
+ros2 launch robot_commander robot_moveit.launch.xml use_simulation:=true //启动robot_moveit非实机仿真模式
+<!-- ros2 run robot_commander commander //启动订阅的相关话题 -->
 ```
 **commander节点还未放入launch文件中，测试是否存在问题**
 ## 相关话题格式
