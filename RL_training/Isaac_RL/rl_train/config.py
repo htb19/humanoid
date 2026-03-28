@@ -196,53 +196,39 @@ def _shrink_placeholder_arm_limits(
     return adjusted_limits
 
 
-def _apply_reference_right_arm_limits(
+def _apply_known_arm_limits(
     joint_limits: dict[str, dict[str, float]],
     arm_joints: list[str],
 ) -> dict[str, dict[str, float]]:
     adjusted_limits = {joint_name: dict(limit) for joint_name, limit in joint_limits.items()}
 
-    # Fallback reference from Fourier GR-2 official arm joint-limit table.
-    # Mapping inference for this custom URDF:
-    # right_base_pitch_joint -> right_shoulder_pitch_joint
-    # right_shoulder_roll_joint -> right_shoulder_roll_joint
-    # right_shoulder_yaw_joint -> right_shoulder_yaw_joint
-    # right_elbow_pitch_joint -> right_elbow_pitch_joint
-    # right_wrist_yaw_joint -> right_wrist_yaw_joint
-    # right_wrist_pitch_joint -> right_wrist_pitch_joint
-    # Source:
-    # https://support.fftai.com/en/docs/GR-X-Humanoid-Robot/GR2/GR-2_Introduction/
-    gr2_reference_limits = {
-        "right_base_pitch_joint": (-2.9671, 2.9671),
-        "right_shoulder_roll_joint": (-2.7925, 0.5236),
-        "right_shoulder_yaw_joint": (-1.8326, 1.8326),
-        "right_elbow_pitch_joint": (-1.5272, 0.47997),
-        "right_wrist_yaw_joint": (-1.8326, 1.8326),
-        "right_wrist_pitch_joint": (-0.61087, 0.61087),
+    # Use the explicit dual-arm limits for this robot instead of the earlier placeholder GR-2 mapping.
+    known_limits = {
+        "right_base_pitch_joint": (-2.967060, 2.967060),
+        "right_shoulder_roll_joint": (-1.832596, 1.832596),
+        "right_shoulder_yaw_joint": (-2.967060, 2.967060),
+        "right_elbow_pitch_joint": (-2.268928, 0.0),
+        "right_wrist_pitch_joint": (-2.967060, 2.967060),
+        "right_wrist_yaw_joint": (-2.094395, 2.094395),
+        "left_base_pitch_joint": (-2.967060, 2.967060),
+        "left_shoulder_roll_joint": (-1.832596, 1.832596),
+        "left_shoulder_yaw_joint": (-2.967060, 2.967060),
+        "left_elbow_pitch_joint": (0.0, 2.268928),
+        "left_wrist_pitch_joint": (-2.967060, 2.967060),
+        "left_wrist_yaw_joint": (-2.094395, 2.094395),
     }
 
-    tolerance = 1e-3
-    generic_lower = -3.14
-    generic_upper = 3.14
-
     for joint_name in arm_joints:
-        if joint_name not in gr2_reference_limits:
+        if joint_name not in known_limits:
             continue
         limit = adjusted_limits.get(joint_name)
         if limit is None:
             continue
 
-        lower = float(limit.get("min_position", generic_lower))
-        upper = float(limit.get("max_position", generic_upper))
-        is_generic = abs(lower - generic_lower) < tolerance and abs(upper - generic_upper) < tolerance
-        if not is_generic:
-            continue
-
-        ref_lower, ref_upper = gr2_reference_limits[joint_name]
+        ref_lower, ref_upper = known_limits[joint_name]
         limit["min_position"] = ref_lower
         limit["max_position"] = ref_upper
-        limit["limit_source"] = "fourier_gr2_reference_mapped"
-        limit["limit_reference"] = "https://support.fftai.com/en/docs/GR-X-Humanoid-Robot/GR2/GR-2_Introduction/"
+        limit["limit_source"] = "explicit_demo_arm_limits"
 
     return adjusted_limits
 
@@ -268,7 +254,7 @@ def load_robot_training_config(
     resolved_gripper_joints = _resolve_joint_names(
         actuated_joints, gripper_joints, _pick_default_gripper_joints(actuated_joints), "gripper"
     )
-    joint_limits = _apply_reference_right_arm_limits(joint_limits, resolved_arm_joints)
+    joint_limits = _apply_known_arm_limits(joint_limits, resolved_arm_joints)
     joint_limits = _shrink_placeholder_arm_limits(joint_limits, resolved_arm_joints)
 
     if end_effector_link is None:
