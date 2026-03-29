@@ -1,5 +1,5 @@
 <launch> 
-    <arg name="use_simulation" default="false"/>
+    <arg name="use_simulation" default="true"/>
     
     <let name="urdf_path"
         value="$(find-pkg-share robot_description)/urdf/humanoid.urdf.xacro" />
@@ -29,9 +29,9 @@
 
     <include file="$(find-pkg-share robot_moveit_config)/launch/move_group.launch.py"/>
 
-    <node pkg="robot_commander" exec="commander" name="commander">
-        <param name="use_sim_time" value="true"/>
-    </node>
+    <!-- <node pkg="robot_commander" exec="commander" name="commander">
+        <param name="use_sim_time" value="false"/>
+    </node> -->
 
     <node pkg="rviz2" exec="rviz2" output="screen" 
         args="-d $(var rviz_config_path)" />
