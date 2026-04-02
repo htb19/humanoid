@@ -78,7 +78,7 @@ class CartesianKeyboardControl(Node):
         msg.pitch = pitch
         msg.yaw = yaw
         msg.relative = True
-        msg.cartesian_path = False
+        msg.cartesian_path = True
         publisher.publish(msg)
     
     def handle_key(self, key):

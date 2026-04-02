@@ -427,13 +427,13 @@
     type="revolute">
     <origin
       xyz="0.0495000377373268 0 0.0624999168897828"
-      rpy="1.5707963267949 0.00263601886731738 1.5707963267949" />
+      rpy="1.5707963267949 0.456186992961128 1.5707963267949" />
     <parent
       link="right_shoulder_yaw_link" />
     <child
       link="right_elbow_pitch_link" />
     <axis
-      xyz="-0.333848242516012 0.0592718558412337 0.940761499039" />
+      xyz="0 0 1" />
     <limit
       lower="-3.14"
       upper="3.14"
@@ -491,7 +491,7 @@
     <child
       link="right_wrist_pitch_link" />
     <axis
-      xyz="0 0 -1" />
+      xyz="0 0 1" />
     <limit
       lower="-3.14"
       upper="3.14"
