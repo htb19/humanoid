@@ -78,29 +78,16 @@ class DualServoTestNode(Node):
             self.get_logger().warn(f"{arm_name}_servo 激活失败: {result.message}")
 
     # ── 笛卡尔指令 ───────────────────────────────────────────
-    def publish_twist(self, publisher, linear_x, linear_y, linear_z, arm_name):
+    def publish_twist(self, publisher, frame_id, linear_x, linear_y, linear_z, arm_name):
         msg = TwistStamped()
         msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = "base_link"
+        msg.header.frame_id = frame_id
         msg.twist.linear.x = linear_x
         msg.twist.linear.y = linear_y
         msg.twist.linear.z = linear_z
         publisher.publish(msg)
         self.get_logger().info(
-            f"[{arm_name}][Twist] linear.x={linear_x:.3f}",
-            throttle_duration_sec=1.0,
-        )
-
-    # ── 关节指令 ─────────────────────────────────────────────
-    def publish_joint_jog(self, publisher, joint_name, velocity, arm_name):
-        msg = JointJog()
-        msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = "base_link"
-        msg.joint_names = [joint_name]
-        msg.velocities = [velocity]
-        publisher.publish(msg)
-        self.get_logger().info(
-            f"[{arm_name}][Joint] {joint_name}={velocity:.3f} rad/s",
+            f"[{arm_name}][Twist] linear={linear_x:.3f}",
             throttle_duration_sec=1.0,
         )
 
@@ -119,25 +106,8 @@ class DualServoTestNode(Node):
 
         if self.count <= 50:
             # 前 5 秒：双臂同时笛卡尔测试
-            self.publish_twist(self.right_twist_pub, 0.0, 0.00, 0.1, "right")
-            self.publish_twist(self.left_twist_pub, -0.01, 0.0, 0.0, "left")
-
-        # elif self.count <= 100:
-            # 5~10 秒：双臂同时关节测试
-            # 修改为你机器人实际关节名
-            # self.publish_joint_jog(
-            #     self.right_joint_pub,
-            #     "right_base_pitch_joint",
-            #     0.2,
-            #     "right",
-            # )
-            # self.publish_joint_jog(
-            #     self.left_joint_pub,
-            #     "left_base_pitch_joint",
-            #     0.2,
-            #     "left",
-            # )
-
+            self.publish_twist(self.right_twist_pub, "right_wrist_yaw_link", 0.0, 0.00,-0.3, "right")
+            self.publish_twist(self.left_twist_pub, "left_wrist_yaw_link", 0.0, 0.0, -0.2, "left")
         else:
             self.stop_all()
             self.get_logger().info("✅ 测试完成")

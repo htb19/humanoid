@@ -1,0 +1,327 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+from typing import Optional
+
+import rclpy
+from rclpy.node import Node
+from rclpy.client import Client
+from rclpy.task import Future
+from rclpy.qos import (
+    QoSProfile,
+    ReliabilityPolicy,
+    HistoryPolicy,
+    DurabilityPolicy,
+)
+from geometry_msgs.msg import TwistStamped
+from std_srvs.srv import Trigger
+
+
+class TwistStampBridge(Node):
+    def __init__(self) -> None:
+        super().__init__("twist_stamp_bridge")
+
+        # =========================
+        # 参数声明
+        # =========================
+        self.declare_parameter("left_input_topic", "/unity/left_twist_raw")
+        self.declare_parameter("right_input_topic", "/unity/right_twist_raw")
+
+        self.declare_parameter(
+            "left_output_topic",
+            "/left_servo/moveit_servo/delta_twist_cmds",
+        )
+        self.declare_parameter(
+            "right_output_topic",
+            "/right_servo/moveit_servo/delta_twist_cmds",
+        )
+
+        self.declare_parameter(
+            "left_start_service",
+            "/left_servo/moveit_servo/start_servo",
+        )
+        self.declare_parameter(
+            "right_start_service",
+            "/right_servo/moveit_servo/start_servo",
+        )
+
+        self.declare_parameter("enable_left", True)
+        self.declare_parameter("enable_right", True)
+
+        self.declare_parameter("reliability", "reliable")
+        self.declare_parameter("depth", 10)
+        self.declare_parameter("wait_service_timeout_sec", 100.0)
+        self.declare_parameter("log_interval_sec", 2.0)
+
+        # =========================
+        # 参数读取（类型安全）
+        # =========================
+        self.left_input_topic: str = (
+            self.get_parameter("left_input_topic")
+            .get_parameter_value()
+            .string_value
+        )
+        self.right_input_topic: str = (
+            self.get_parameter("right_input_topic")
+            .get_parameter_value()
+            .string_value
+        )
+
+        self.left_output_topic: str = (
+            self.get_parameter("left_output_topic")
+            .get_parameter_value()
+            .string_value
+        )
+        self.right_output_topic: str = (
+            self.get_parameter("right_output_topic")
+            .get_parameter_value()
+            .string_value
+        )
+
+        self.left_start_service: str = (
+            self.get_parameter("left_start_service")
+            .get_parameter_value()
+            .string_value
+        )
+        self.right_start_service: str = (
+            self.get_parameter("right_start_service")
+            .get_parameter_value()
+            .string_value
+        )
+
+        self.enable_left: bool = (
+            self.get_parameter("enable_left")
+            .get_parameter_value()
+            .bool_value
+        )
+        self.enable_right: bool = (
+            self.get_parameter("enable_right")
+            .get_parameter_value()
+            .bool_value
+        )
+
+        reliability_str: str = (
+            self.get_parameter("reliability")
+            .get_parameter_value()
+            .string_value
+            .lower()
+        )
+
+        depth: int = (
+            self.get_parameter("depth")
+            .get_parameter_value()
+            .integer_value
+        )
+
+        self.wait_service_timeout_sec: float = (
+            self.get_parameter("wait_service_timeout_sec")
+            .get_parameter_value()
+            .double_value
+        )
+
+        self.log_interval_sec: float = (
+            self.get_parameter("log_interval_sec")
+            .get_parameter_value()
+            .double_value
+        )
+
+        # =========================
+        # QoS 配置
+        # =========================
+        reliability: ReliabilityPolicy
+        if reliability_str == "reliable":
+            reliability = ReliabilityPolicy.RELIABLE
+        else:
+            reliability = ReliabilityPolicy.BEST_EFFORT
+
+        self.qos: QoSProfile = QoSProfile(
+            reliability=reliability,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=depth,
+            durability=DurabilityPolicy.VOLATILE,
+        )
+
+        # =========================
+        # 成员初始化
+        # =========================
+        self.left_pub = None
+        self.right_pub = None
+        self.left_sub = None
+        self.right_sub = None
+        self.timer = None
+
+        self.left_count: int = 0
+        self.right_count: int = 0
+
+        self.get_logger().info("TwistStampBridge starting...")
+        self.get_logger().info(
+            f"QoS: reliability={reliability_str}, depth={depth}, "
+            f"history=keep_last, durability=volatile"
+        )
+
+        # =========================
+        # 先创建 publisher
+        # =========================
+        if self.enable_left:
+            self.left_pub = self.create_publisher(
+                TwistStamped,
+                self.left_output_topic,
+                self.qos,
+            )
+
+        if self.enable_right:
+            self.right_pub = self.create_publisher(
+                TwistStamped,
+                self.right_output_topic,
+                self.qos,
+            )
+
+        # =========================
+        # 先激活 Servo，再开始订阅 Unity
+        # =========================
+        if self.enable_left:
+            ok_left: bool = self.start_servo(self.left_start_service, "left")
+            if not ok_left:
+                raise RuntimeError(
+                    f"Failed to start left servo: {self.left_start_service}"
+                )
+
+        if self.enable_right:
+            ok_right: bool = self.start_servo(self.right_start_service, "right")
+            if not ok_right:
+                raise RuntimeError(
+                    f"Failed to start right servo: {self.right_start_service}"
+                )
+
+        # =========================
+        # Servo 激活成功后再创建订阅
+        # =========================
+        if self.enable_left:
+            self.left_sub = self.create_subscription(
+                TwistStamped,
+                self.left_input_topic,
+                self.left_cb,
+                self.qos,
+            )
+
+        if self.enable_right:
+            self.right_sub = self.create_subscription(
+                TwistStamped,
+                self.right_input_topic,
+                self.right_cb,
+                self.qos,
+            )
+
+        self.timer = self.create_timer(
+            self.log_interval_sec,
+            self.log_status,
+        )
+
+        self.get_logger().info("TwistStampBridge ready.")
+
+        if self.enable_left:
+            self.get_logger().info(
+                f"Left : {self.left_input_topic} -> {self.left_output_topic}"
+            )
+
+        if self.enable_right:
+            self.get_logger().info(
+                f"Right: {self.right_input_topic} -> {self.right_output_topic}"
+            )
+
+    def start_servo(self, service_name: str, tag: str) -> bool:
+        client: Client = self.create_client(Trigger, service_name)
+
+        self.get_logger().info(f"[{tag}] waiting for service: {service_name}")
+        available: bool = client.wait_for_service(
+            timeout_sec=self.wait_service_timeout_sec
+        )
+        if not available:
+            self.get_logger().error(
+                f"[{tag}] service not available: {service_name}"
+            )
+            return False
+
+        req: Trigger.Request = Trigger.Request()
+        future: Future = client.call_async(req)
+
+        rclpy.spin_until_future_complete(
+            self,
+            future,
+            timeout_sec=self.wait_service_timeout_sec,
+        )
+
+        if not future.done():
+            self.get_logger().error(
+                f"[{tag}] start_servo call timed out: {service_name}"
+            )
+            return False
+
+        result: Optional[Trigger.Response] = future.result()
+        if result is None:
+            self.get_logger().error(
+                f"[{tag}] start_servo call returned None: {service_name}"
+            )
+            return False
+
+        if result.success:
+            self.get_logger().info(
+                f"[{tag}] start_servo success: {result.message}"
+            )
+            return True
+
+        self.get_logger().error(
+            f"[{tag}] start_servo failed: {result.message}"
+        )
+        return False
+
+    def left_cb(self, msg: TwistStamped) -> None:
+        if self.left_pub is None:
+            return
+
+        out = TwistStamped()
+        out.header.stamp = self.get_clock().now().to_msg()
+        out.header.frame_id = msg.header.frame_id
+        out.twist = msg.twist
+
+        self.left_pub.publish(out)
+        self.left_count += 1
+
+    def right_cb(self, msg: TwistStamped) -> None:
+        if self.right_pub is None:
+            return
+
+        out = TwistStamped()
+        out.header.stamp = self.get_clock().now().to_msg()
+        out.header.frame_id = msg.header.frame_id
+        out.twist = msg.twist
+
+        self.right_pub.publish(out)
+        self.right_count += 1
+
+    def log_status(self) -> None:
+        self.get_logger().info(
+            f"bridge alive | left forwarded: {self.left_count} | "
+            f"right forwarded: {self.right_count}"
+        )
+
+
+def main(args: Optional[list[str]] = None) -> None:
+    rclpy.init(args=args)
+    node: Optional[TwistStampBridge] = None
+
+    try:
+        node = TwistStampBridge()
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    except Exception as exc:
+        print(f"[twist_stamp_bridge] fatal: {exc}")
+    finally:
+        if node is not None:
+            node.destroy_node()
+        rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

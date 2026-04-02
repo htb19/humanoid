@@ -8,7 +8,7 @@ scale:
   joint: 0.5
 
 ## Properties of outgoing commands
-publish_period: 0.034
+publish_period: 0.01
 low_latency_mode: true
 
 command_out_type: trajectory_msgs/JointTrajectory
@@ -31,16 +31,16 @@ planning_frame: base_link
 ## Frames
 ee_frame_name: right_wrist_yaw_link
 # robot_link_command_frame: base_link
-robot_link_command_frame: right_wrist_yaw_link
+robot_link_command_frame: base_link
 
 ## Stopping behaviour
-incoming_command_timeout: 0.5
+incoming_command_timeout: 0.2
 num_outgoing_halt_msgs_to_publish: 4
 
 ## Singularity & joint limits
 lower_singularity_threshold: 17.0
 hard_stop_singularity_threshold: 30.0
-joint_limit_margin: 0.1
+joint_limit_margin: 0.3
 leaving_singularity_threshold_multiplier: 2.0
 
 ## Topic names
