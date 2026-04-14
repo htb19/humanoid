@@ -16,6 +16,7 @@
         <joint name="right_elbow_pitch_joint"/>
         <joint name="right_wrist_pitch_joint"/>
         <joint name="right_wrist_yaw_joint"/>
+        <joint name="right_tcp_joint"/>
     </group>
     <group name="left_arm">
         <joint name="left_base_pitch_joint"/>
@@ -24,6 +25,7 @@
         <joint name="left_elbow_pitch_joint"/>
         <joint name="left_wrist_pitch_joint"/>
         <joint name="left_wrist_yaw_joint"/>
+        <joint name="left_tcp_joint"/>
     </group>
     <group name="left_gripper">
         <joint name="left_gripper1_joint"/>

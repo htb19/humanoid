@@ -1240,4 +1240,29 @@
     <child
       link="left_camera_link" />
   </joint>
+
+    <!-- 右手机械臂末端工具系坐标系 -->
+    <link name="right_tcp_link" />
+    <joint
+        name="right_tcp_joint"
+        type="fixed">
+        <origin
+            xyz="0 0.141000000000003 -0.0424999999999999"
+            rpy="1.5707963267949 0 3.14159265358979" />
+        <parent link="right_wrist_yaw_link" />
+        <child link="right_tcp_link"/>
+    </joint>
+    
+    <!-- 左手机械臂末端工具系坐标系 -->
+    <link name="left_tcp_link" />
+    <joint
+        name="left_tcp_joint"
+        type="fixed">
+        <origin
+            xyz="0 0.14099995082628 -0.0425000000000004"
+            rpy="1.5707963267949 0 -3.14159265358979" />
+        <parent link="left_wrist_yaw_link" />     
+        <child link="left_tcp_link"/>
+    </joint>
+
 </robot>

@@ -3,8 +3,8 @@ use_gazebo: false
 ## Properties of incoming commands
 command_in_type: "speed_units"
 scale:
-  linear: 0.4
-  rotational: 0.8
+  linear: 1.0
+  rotational: 1.0
   joint: 0.5
 
 ## Properties of outgoing commands
@@ -29,7 +29,7 @@ move_group_name: right_arm
 planning_frame: base_link
 
 ## Frames
-ee_frame_name: right_wrist_yaw_link
+ee_frame_name: right_tcp_link
 # robot_link_command_frame: base_link
 robot_link_command_frame: base_link
 
