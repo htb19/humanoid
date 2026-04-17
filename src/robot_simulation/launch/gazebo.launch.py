@@ -144,6 +144,23 @@ def launch_setup(context: LaunchContext):
         output="screen"
     )
     
+    # (4) 静态TF: world -> base_link（与Gazebo spawn位姿一致，供RViz使用）
+    static_tf_world_to_base = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        arguments=[
+            "--x", "0",
+            "--y", "0",
+            "--z", "0.9",
+            "--yaw", "1.5708",
+            "--pitch", "0",
+            "--roll", "0",
+            "--frame-id", "world",
+            "--child-frame-id", "base_link",
+        ],
+        output="screen"
+    )
+    
     # ============ 3. 加载控制器 ============
     # 关节状态广播器（基础，必须最先加载）
     joint_state_broadcaster = Node(
@@ -289,6 +306,7 @@ def launch_setup(context: LaunchContext):
         # 核心流程
         gz_sim,
         robot_state_publisher,
+        static_tf_world_to_base,
         spawn_entity,
         load_joint_state_broadcaster,
     ]
