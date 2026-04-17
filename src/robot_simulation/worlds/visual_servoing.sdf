@@ -29,17 +29,17 @@
     
     <include>
       <uri>model://desk</uri>
-      <pose>0 0.8 0 0 0 -1.5707963267</pose>
+      <pose>0 0.5 0 0 0 -1.5707963267</pose>
     </include>
     
     <include>
       <uri>model://coffee_mug</uri>
-      <pose>0 0.7 0.6 0 0 0</pose>
+      <pose>0 0.4 0.6 0 0 0</pose>
     </include>
     
     <include>
       <uri>model://coke_can</uri>
-      <pose>0.2 0.75 0.8 0 0 0</pose>
+      <pose>0.2 0.45 0.8 0 0 0</pose>
     </include>
   </world>
 </sdf>

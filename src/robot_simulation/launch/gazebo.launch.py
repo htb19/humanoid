@@ -136,9 +136,10 @@ def launch_setup(context: LaunchContext):
         arguments=[
             "-name", "humanoid",
             "-topic", "/robot_description",
-            "-z", "0.1",  # 抬高1米避免穿模
+            "-z", "0.9",  # 抬高1米避免穿模
             "-x", "0",
-            "-y", "0"
+            "-y", "0",
+            "-Y", "1.5708",
         ],
         output="screen"
     )
