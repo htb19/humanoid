@@ -7,6 +7,17 @@
   <maintainer email="3199320251@qq.com">wj</maintainer>
   <license>TODO: License declaration</license>
 
+  <depend>ament_index_python</depend>
+  <depend>control_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>launch</depend>
+  <depend>launch_ros</depend>
+  <depend>moveit_configs_utils</depend>
+  <depend>moveit_servo</depend>
+  <depend>python3-yaml</depend>
+  <depend>rclpy</depend>
+  <depend>std_srvs</depend>
+
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>

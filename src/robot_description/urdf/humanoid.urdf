@@ -435,7 +435,7 @@
     <child
       link="right_elbow_pitch_link" />
     <axis
-      xyz="0 0 -1" />
+      xyz="0 0 1" />
     <limit
       lower="-1.5707963267949"
       upper="0.0174532925199433"
@@ -551,7 +551,7 @@
     <child
       link="right_wrist_yaw_link" />
     <axis
-      xyz="0 0 -1" />
+      xyz="0 0 1" />
     <limit
       lower="-2.0943951023932"
       upper="2.0943951023932"
