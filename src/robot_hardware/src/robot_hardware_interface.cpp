@@ -218,6 +218,10 @@ HumanoidRobotHardware::on_activate(const rclcpp_lifecycle::State & /*previous_st
 {
     RCLCPP_INFO(rclcpp::get_logger("HumanoidRobotHardware"), "on_activate");
 
+    hardware_fault_ = false;
+    fault_joint_index_ = -1;
+    fault_error_code_ = 0;
+
     // if (!mgr_->enableAll())
     // {
     //     RCLCPP_ERROR(rclcpp::get_logger("HumanoidRobotHardware"),
@@ -347,6 +351,9 @@ HumanoidRobotHardware::read(const rclcpp::Time & /*time*/, const rclcpp::Duratio
     for (int k : virtual_joints_)
         hw_pos_[k] = hw_cmd_[k];
 
+    if (hardware_fault_)
+        return hardware_interface::return_type::ERROR;
+
     return hardware_interface::return_type::OK;
 }
 
@@ -409,6 +416,22 @@ void HumanoidRobotHardware::drainFeedback(int channel)
         // 更新状态缓冲（弧度制，与 ros2_control 约定一致）
         hw_pos_[idx] = static_cast<double>(fb.position_rad);
         hw_vel_[idx] = static_cast<double>(fb.velocity_rad_s);
+
+        if (fb.has_error || fb.error_code != 0)
+        {
+            hardware_fault_ = true;
+            fault_joint_index_ = idx;
+            fault_error_code_ = fb.error_code;
+
+            RCLCPP_ERROR_THROTTLE(
+                rclcpp::get_logger("HumanoidRobotHardware"),
+                *clock_, 1000,
+                "Motor fault: joint='%s', ch=%d, dev_id=%d, error_code=0x%04X",
+                hw_info_.joints[idx].name.c_str(),
+                channel,
+                fb.dev_id,
+                fb.error_code);
+        }
     }
 }
 
@@ -422,6 +445,9 @@ void HumanoidRobotHardware::drainFeedback(int channel)
 hardware_interface::return_type
 HumanoidRobotHardware::write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
+    if (hardware_fault_)
+        return hardware_interface::return_type::ERROR;
+
     for (int ch : used_channels_)
     {
         if (!mgr_->sendMultiAxisCSP(ch, hw_cmd_.data()))
