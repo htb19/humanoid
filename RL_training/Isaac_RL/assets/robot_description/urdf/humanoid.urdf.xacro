@@ -2,6 +2,7 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="humanoid">
     <xacro:arg name="initial_positions_file" default="$(find robot_description)/config/initial_positions.yaml" />
     <xacro:arg name="use_gazebo" default="false"/>
+    <xacro:arg name="use_simulation" default="false"/>
 
     <!-- Import humanoid urdf file -->
     <xacro:include filename="humanoid.urdf" />
@@ -17,16 +18,23 @@
       <!-- 包含 Gazebo 配置 -->
       <xacro:include filename="humanoid.gazebo.xacro"/>
       <xacro:robot_gazebo/>
-      
+
     </xacro:if>
     
     <xacro:unless value="$(arg use_gazebo)">
-      <!-- 实机 -->
-      
-      <!-- Import control_xacro -->
-      <xacro:include filename="humanoid.ros2_control.xacro" />
-      
-      <xacro:humanoid_ros2_control name="FakeSystem" initial_positions_file="$(arg initial_positions_file)"/>
+
+      <xacro:if value="$(arg use_simulation)">
+        <!-- 非实机 仿真 -->
+        <xacro:include filename="humanoid.simulation.ros2_control.xacro" />
+        <xacro:humanoid_ros2_control name="FakeSystem" initial_positions_file="$(arg initial_positions_file)"/>
+      </xacro:if>
+
+      <xacro:unless value="$(arg use_simulation)">
+        <!-- 实机 -->
+        <!-- Import control_xacro -->
+        <xacro:include filename="humanoid.ros2_control.xacro" />
+        <xacro:humanoid_ros2_control name="FakeSystem" initial_positions_file="$(arg initial_positions_file)"/>
+      </xacro:unless>
     </xacro:unless>
 
 </robot>

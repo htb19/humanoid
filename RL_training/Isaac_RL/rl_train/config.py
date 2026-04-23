@@ -19,6 +19,10 @@ class RobotTrainingConfig:
     gripper_joints: list[str]
     joint_limits: dict[str, dict[str, float]]
     end_effector_link: str
+    robot_root_position: tuple[float, float, float]
+    home_joint_positions: dict[str, float]
+    open_gripper_positions: dict[str, float]
+    closed_gripper_positions: dict[str, float]
     train_brick_range: dict[str, float]
     eval_brick_range: dict[str, float]
 
@@ -196,41 +200,79 @@ def _shrink_placeholder_arm_limits(
     return adjusted_limits
 
 
-def _apply_known_arm_limits(
+REQUESTED_RIGHT_ARM_LIMITS = {
+    "right_base_pitch_joint": (0.0, 1.4),
+    "right_shoulder_roll_joint": (-1.4, 0.3),
+    "right_shoulder_yaw_joint": (-0.3, 1.4),
+    "right_elbow_pitch_joint": (0.9, 1.6),
+    "right_wrist_pitch_joint": (-1.4, 1.4),
+    "right_wrist_yaw_joint": (-1.4, 1.4),
+}
+
+
+REQUESTED_RIGHT_ARM_HOME = {
+    "right_base_pitch_joint": 0.0,
+    "right_shoulder_roll_joint": 0.0,
+    "right_shoulder_yaw_joint": 0.0,
+    "right_elbow_pitch_joint": 1.4,
+    "right_wrist_pitch_joint": 0,
+    "right_wrist_yaw_joint": 0,
+}
+
+
+def _apply_requested_right_arm_limits(
     joint_limits: dict[str, dict[str, float]],
     arm_joints: list[str],
 ) -> dict[str, dict[str, float]]:
     adjusted_limits = {joint_name: dict(limit) for joint_name, limit in joint_limits.items()}
 
-    # Use the explicit dual-arm limits for this robot instead of the earlier placeholder GR-2 mapping.
-    known_limits = {
-        "right_base_pitch_joint": (-2.967060, 2.967060),
-        "right_shoulder_roll_joint": (-1.832596, 1.832596),
-        "right_shoulder_yaw_joint": (-2.967060, 2.967060),
-        "right_elbow_pitch_joint": (-2.268928, 0.0),
-        "right_wrist_pitch_joint": (-2.967060, 2.967060),
-        "right_wrist_yaw_joint": (-2.094395, 2.094395),
-        "left_base_pitch_joint": (-2.967060, 2.967060),
-        "left_shoulder_roll_joint": (-1.832596, 1.832596),
-        "left_shoulder_yaw_joint": (-2.967060, 2.967060),
-        "left_elbow_pitch_joint": (0.0, 2.268928),
-        "left_wrist_pitch_joint": (-2.967060, 2.967060),
-        "left_wrist_yaw_joint": (-2.094395, 2.094395),
-    }
-
     for joint_name in arm_joints:
-        if joint_name not in known_limits:
+        if joint_name not in REQUESTED_RIGHT_ARM_LIMITS:
             continue
         limit = adjusted_limits.get(joint_name)
         if limit is None:
             continue
 
-        ref_lower, ref_upper = known_limits[joint_name]
+        if "urdf_min_position" not in limit:
+            limit["urdf_min_position"] = float(limit.get("min_position", -3.14))
+        if "urdf_max_position" not in limit:
+            limit["urdf_max_position"] = float(limit.get("max_position", 3.14))
+        ref_lower, ref_upper = REQUESTED_RIGHT_ARM_LIMITS[joint_name]
         limit["min_position"] = ref_lower
         limit["max_position"] = ref_upper
-        limit["limit_source"] = "explicit_demo_arm_limits"
+        limit["limit_source"] = "requested_right_arm_training_limits"
 
     return adjusted_limits
+
+
+def _build_home_joint_positions(actuated_joints: list[str]) -> dict[str, float]:
+    ready_pose = {
+        **REQUESTED_RIGHT_ARM_HOME,
+        "left_base_pitch_joint": 0.0,
+        "left_shoulder_roll_joint": 0.0,
+        "left_shoulder_yaw_joint": 0.0,
+        "left_elbow_pitch_joint": 0.0,
+        "left_wrist_pitch_joint": 0.0,
+        "left_wrist_yaw_joint": 0.0,
+    }
+    return {joint: value for joint, value in ready_pose.items() if joint in actuated_joints}
+
+
+def _build_gripper_positions(
+    gripper_joints: list[str],
+    joint_limits: dict[str, dict[str, float]],
+) -> tuple[dict[str, float], dict[str, float]]:
+    open_positions: dict[str, float] = {}
+    closed_positions: dict[str, float] = {}
+    for joint_name in gripper_joints:
+        limit = joint_limits.get(joint_name, {})
+        lower = float(limit.get("min_position", -0.03))
+        upper = float(limit.get("max_position", 0.03))
+        closed = min(max(0.0, lower), upper)
+        open_position = lower if abs(lower - closed) >= abs(upper - closed) else upper
+        closed_positions[joint_name] = closed
+        open_positions[joint_name] = open_position
+    return open_positions, closed_positions
 
 
 def load_robot_training_config(
@@ -254,8 +296,12 @@ def load_robot_training_config(
     resolved_gripper_joints = _resolve_joint_names(
         actuated_joints, gripper_joints, _pick_default_gripper_joints(actuated_joints), "gripper"
     )
-    joint_limits = _apply_known_arm_limits(joint_limits, resolved_arm_joints)
+    joint_limits = _apply_requested_right_arm_limits(joint_limits, resolved_arm_joints)
     joint_limits = _shrink_placeholder_arm_limits(joint_limits, resolved_arm_joints)
+    home_joint_positions = _build_home_joint_positions(actuated_joints)
+    open_gripper_positions, closed_gripper_positions = _build_gripper_positions(
+        resolved_gripper_joints, joint_limits
+    )
 
     if end_effector_link is None:
         end_effector_link = joint_child_links.get(resolved_arm_joints[-1], "right_wrist_yaw_link")
@@ -272,8 +318,15 @@ def load_robot_training_config(
         gripper_joints=resolved_gripper_joints,
         joint_limits=joint_limits,
         end_effector_link=end_effector_link,
-        # URDF frame convention for this robot: +Y is forward, +X is left/right.
-        # Keep the brick centered laterally and sample it forward on the table.
-        train_brick_range={"x_min": -0.16, "x_max": 0.16, "y_min": 0.50, "y_max": 0.64},
-        eval_brick_range={"x_min": -0.20, "x_max": 0.20, "y_min": 0.46, "y_max": 0.68},
+        # The updated URDF places the base_link origin near the shoulder frame and
+        # the main body mesh extends downward. Lift the fixed base so the robot
+        # occupies the same world height as the previous model.
+        robot_root_position=(0.0, 0.0, 0.815),
+        home_joint_positions=home_joint_positions,
+        open_gripper_positions=open_gripper_positions,
+        closed_gripper_positions=closed_gripper_positions,
+        # Training brick range narrowed for easier early learning (curriculum stage 1).
+        # The brick spawns closer to the robot's right arm workspace center.
+        train_brick_range={"x_min": 0.38, "x_max": 0.54, "y_min": -0.32, "y_max": -0.18},
+        eval_brick_range={"x_min": 0.32, "x_max": 0.62, "y_min": -0.40, "y_max": -0.10},
     )

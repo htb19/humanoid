@@ -50,6 +50,20 @@ class TrainingMonitorCallback(BaseCallback):
             "grasped_rate",
             "lifted_rate",
             "stable_hold_rate",
+            "mean_final_distance",
+            "mean_min_distance",
+            "mean_final_brick_height",
+            "mean_action_magnitude",
+            "mean_last_action_magnitude",
+            "reward_action_penalty",
+            "reward_distance",
+            "reward_approach",
+            "reward_reach_bonus",
+            "reward_grasp_bonus",
+            "reward_success_bonus",
+            "reward_lift_bonus",
+            "reward_height_bonus",
+            "reward_velocity_penalty",
             "policy_loss",
             "value_loss",
             "entropy_loss",
@@ -77,6 +91,23 @@ class TrainingMonitorCallback(BaseCallback):
                     "grasped_object": float(info.get("grasped_object", 0.0)),
                     "lifted_object": float(info.get("lifted_object", 0.0)),
                     "stable_hold": float(info.get("stable_hold", 0.0)),
+                    # --- Per-term reward diagnostics ---
+                    "reward_action_penalty": float(info.get("reward_action_penalty", 0.0)),
+                    "reward_distance": float(info.get("reward_distance", 0.0)),
+                    "reward_approach": float(info.get("reward_approach", 0.0)),
+                    "reward_reach_bonus": float(info.get("reward_reach_bonus", 0.0)),
+                    "reward_grasp_bonus": float(info.get("reward_grasp_bonus", 0.0)),
+                    "reward_success_bonus": float(info.get("reward_success_bonus", 0.0)),
+                    "reward_lift_bonus": float(info.get("reward_lift_bonus", 0.0)),
+                    "reward_height_bonus": float(info.get("reward_height_bonus", 0.0)),
+                    "reward_velocity_penalty": float(info.get("reward_velocity_penalty", 0.0)),
+                    "distance_to_brick": float(
+                        info.get("final_distance_to_brick", info.get("distance_to_brick", 0.0))
+                    ),
+                    "min_episode_distance": float(info.get("min_episode_distance", 0.0)),
+                    "brick_height": float(info.get("final_brick_height", info.get("brick_height", 0.0))),
+                    "action_magnitude": float(info.get("action_magnitude", 0.0)),
+                    "last_action_magnitude": float(info.get("last_action_magnitude", 0.0)),
                 }
             )
         return True
@@ -90,6 +121,11 @@ class TrainingMonitorCallback(BaseCallback):
         grasped = [item["grasped_object"] for item in self._episode_history]
         lifted = [item["lifted_object"] for item in self._episode_history]
         stable_hold = [item["stable_hold"] for item in self._episode_history]
+        distances = [item.get("distance_to_brick", 0.0) for item in self._episode_history]
+        min_distances = [item.get("min_episode_distance", 0.0) for item in self._episode_history]
+        heights = [item.get("brick_height", 0.0) for item in self._episode_history]
+        action_magnitudes = [item.get("action_magnitude", 0.0) for item in self._episode_history]
+        last_action_magnitudes = [item.get("last_action_magnitude", 0.0) for item in self._episode_history]
 
         metrics = {
             "mean_episode_reward": _safe_mean(rewards),
@@ -99,12 +135,27 @@ class TrainingMonitorCallback(BaseCallback):
             "grasped_rate": _safe_mean(grasped),
             "lifted_rate": _safe_mean(lifted),
             "stable_hold_rate": _safe_mean(stable_hold),
+            "mean_final_distance": _safe_mean(distances),
+            "mean_min_distance": _safe_mean(min_distances),
+            "mean_final_brick_height": _safe_mean(heights),
+            "mean_action_magnitude": _safe_mean(action_magnitudes),
+            "mean_last_action_magnitude": _safe_mean(last_action_magnitudes),
             "completed_episodes": float(self.completed_episodes),
             "update": float(self.update_idx),
             "timesteps": float(self.num_timesteps),
         }
         for key, value in metrics.items():
             self.logger.record(f"robotics/{key}", value)
+
+        # --- Per-term reward diagnostics for tensorboard ---
+        reward_term_keys = [
+            "reward_action_penalty", "reward_distance", "reward_approach",
+            "reward_reach_bonus", "reward_grasp_bonus", "reward_success_bonus",
+            "reward_lift_bonus", "reward_height_bonus", "reward_velocity_penalty",
+        ]
+        for term_key in reward_term_keys:
+            values = [item.get(term_key, 0.0) for item in self._episode_history]
+            self.logger.record(f"reward_terms/{term_key}", _safe_mean(values))
 
         logger_values = self.logger.name_to_value
         row = {
@@ -118,6 +169,20 @@ class TrainingMonitorCallback(BaseCallback):
             "grasped_rate": metrics["grasped_rate"],
             "lifted_rate": metrics["lifted_rate"],
             "stable_hold_rate": metrics["stable_hold_rate"],
+            "mean_final_distance": metrics["mean_final_distance"],
+            "mean_min_distance": metrics["mean_min_distance"],
+            "mean_final_brick_height": metrics["mean_final_brick_height"],
+            "mean_action_magnitude": metrics["mean_action_magnitude"],
+            "mean_last_action_magnitude": metrics["mean_last_action_magnitude"],
+            "reward_action_penalty": logger_values.get("reward_terms/reward_action_penalty", float("nan")),
+            "reward_distance": logger_values.get("reward_terms/reward_distance", float("nan")),
+            "reward_approach": logger_values.get("reward_terms/reward_approach", float("nan")),
+            "reward_reach_bonus": logger_values.get("reward_terms/reward_reach_bonus", float("nan")),
+            "reward_grasp_bonus": logger_values.get("reward_terms/reward_grasp_bonus", float("nan")),
+            "reward_success_bonus": logger_values.get("reward_terms/reward_success_bonus", float("nan")),
+            "reward_lift_bonus": logger_values.get("reward_terms/reward_lift_bonus", float("nan")),
+            "reward_height_bonus": logger_values.get("reward_terms/reward_height_bonus", float("nan")),
+            "reward_velocity_penalty": logger_values.get("reward_terms/reward_velocity_penalty", float("nan")),
             "policy_loss": logger_values.get("train/policy_gradient_loss", float("nan")),
             "value_loss": logger_values.get("train/value_loss", float("nan")),
             "entropy_loss": logger_values.get("train/entropy_loss", float("nan")),
@@ -138,8 +203,10 @@ class TrainingMonitorCallback(BaseCallback):
                 f"mean_reward={row['mean_episode_reward']:.2f} "
                 f"mean_len={row['mean_episode_length']:.1f} "
                 f"success={row['success_rate']:.2%} "
+                f"reached={row['reached_rate']:.2%} "
                 f"grasped={row['grasped_rate']:.2%} "
                 f"lifted={row['lifted_rate']:.2%} "
+                f"dist={row['mean_final_distance']:.3f} "
                 f"policy_loss={row['policy_loss']:.4f} "
                 f"value_loss={row['value_loss']:.4f}"
             )
@@ -159,6 +226,13 @@ class PeriodicEvalCallback(BaseCallback):
         n_eval_episodes: int = 5,
         robot_description_path: Path | None = None,
         headless: bool = True,
+        reaching_only: bool = False,
+        reach_distance_threshold: float | None = None,
+        reach_threshold_phase: int | None = None,
+        use_grasp_tcp: str | bool | None = None,
+        arm_action_scale: float | None = None,
+        reaching_brick_range: dict[str, float] | None = None,
+        reaching_home_overrides: dict[str, float] | None = None,
         verbose: int = 0,
     ) -> None:
         super().__init__(verbose=verbose)
@@ -169,6 +243,13 @@ class PeriodicEvalCallback(BaseCallback):
         self.n_eval_episodes = n_eval_episodes
         self.robot_description_path = robot_description_path
         self.headless = headless
+        self.reaching_only = reaching_only
+        self.reach_distance_threshold = reach_distance_threshold
+        self.reach_threshold_phase = reach_threshold_phase
+        self.use_grasp_tcp = use_grasp_tcp
+        self.arm_action_scale = arm_action_scale
+        self.reaching_brick_range = reaching_brick_range
+        self.reaching_home_overrides = reaching_home_overrides
         self.last_eval_step = 0
         self.eval_idx = 0
         self.best_success_rate = -np.inf
@@ -217,6 +298,28 @@ class PeriodicEvalCallback(BaseCallback):
         ]
         if self.robot_description_path is not None:
             command.extend(["--robot-description-path", str(self.robot_description_path)])
+        if self.reaching_only:
+            command.extend(["--reaching-only", "true"])
+        if self.reach_distance_threshold is not None:
+            command.extend(["--reach-threshold", str(self.reach_distance_threshold)])
+        if self.reach_threshold_phase is not None:
+            command.extend(["--reach-threshold-phase", str(self.reach_threshold_phase)])
+        if self.use_grasp_tcp is not None:
+            command.extend(["--use-grasp-tcp", str(self.use_grasp_tcp).lower()])
+        if self.arm_action_scale is not None:
+            command.extend(["--arm-action-scale", str(self.arm_action_scale)])
+        if self.reaching_brick_range is not None:
+            command.extend([
+                "--reaching-brick-x-range",
+                f"{self.reaching_brick_range['x_min']},{self.reaching_brick_range['x_max']}",
+                "--reaching-brick-y-range",
+                f"{self.reaching_brick_range['y_min']},{self.reaching_brick_range['y_max']}",
+            ])
+        if self.reaching_home_overrides:
+            command.extend([
+                "--reaching-home-overrides",
+                ",".join(f"{joint}={value}" for joint, value in self.reaching_home_overrides.items()),
+            ])
         try:
             subprocess.run(command, check=True)
         except subprocess.CalledProcessError as exc:
