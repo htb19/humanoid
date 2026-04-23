@@ -37,22 +37,22 @@ SETTLE_STEPS = 80
 MAX_DEMO_SECONDS = 45.0
 
 _READY_ARM_POSE = {
-    # Validated dual-arm working pose from simulation.
-    # Joint order:
-    # [right_base_pitch, right_shoulder_roll, right_shoulder_yaw, right_elbow_pitch,
-    #  right_wrist_pitch, right_wrist_yaw, left_base_pitch, left_shoulder_roll,
-    #  left_shoulder_yaw, left_elbow_pitch, left_wrist_pitch, left_wrist_yaw]
-    "right_base_pitch_joint": 0.0,
+    # Raised pre-grasp ready pose — arms lifted with end-effectors above the table.
+    # Matches the home_joint_positions in config.py.
+    # base_pitch=1.40 lifts the upper arm ~80° forward (nearly vertical).
+    # elbow_pitch=±1.40 bends the forearm downward toward the table.
+    # wrist_pitch=±0.3 orients the gripper for a top-down approach.
+    "right_base_pitch_joint": 1.40,
     "right_shoulder_roll_joint": 0.0,
     "right_shoulder_yaw_joint": 0.0,
-    "right_elbow_pitch_joint": -1.2,
-    "right_wrist_pitch_joint": 0.6,
+    "right_elbow_pitch_joint": -1.40,
+    "right_wrist_pitch_joint": 0.3,
     "right_wrist_yaw_joint": 0.0,
-    "left_base_pitch_joint": 0.0,
+    "left_base_pitch_joint": 1.40,
     "left_shoulder_roll_joint": 0.0,
     "left_shoulder_yaw_joint": 0.0,
-    "left_elbow_pitch_joint": 1.2,
-    "left_wrist_pitch_joint": -0.6,
+    "left_elbow_pitch_joint": 1.40,
+    "left_wrist_pitch_joint": -0.3,
     "left_wrist_yaw_joint": 0.0,
 }
 
@@ -93,7 +93,7 @@ def build_ready_pose(scene: HumanoidBrickPickDemoScene, current_joint_positions:
         joint_index = joint_name_to_index.get(joint_name)
         if joint_index is None:
             continue
-        joint_positions[joint_index] = value
+        joint_positions[joint_index] = scene.training_config.home_joint_positions.get(joint_name, value)
     return joint_positions
 
 
@@ -347,6 +347,7 @@ def set_initial_joint_positions(scene: HumanoidBrickPickDemoScene) -> None:
         scene.articulation.set_joints_default_state(positions=joint_positions)
         scene.world.reset()
         scene.articulation.initialize()
+        scene.set_robot_root_pose()
     scene.articulation.set_joint_positions(joint_positions)
     scene.articulation.set_joint_velocities(np.zeros_like(joint_positions))
     scene.step_world(steps=SETTLE_STEPS)
@@ -410,8 +411,20 @@ class BrickPickDemo:
 
         self.arm_dim = len(self.training_config.arm_joints)
         self.gripper_dim = len(self.training_config.gripper_joints)
-        self.open_gripper = np.array([0.03, -0.03], dtype=np.float64)[: self.gripper_dim]
-        self.closed_gripper = np.array([0.0, 0.0], dtype=np.float64)[: self.gripper_dim]
+        self.open_gripper = np.array(
+            [
+                self.training_config.open_gripper_positions.get(joint_name, 0.0)
+                for joint_name in self.training_config.gripper_joints
+            ],
+            dtype=np.float64,
+        )
+        self.closed_gripper = np.array(
+            [
+                self.training_config.closed_gripper_positions.get(joint_name, 0.0)
+                for joint_name in self.training_config.gripper_joints
+            ],
+            dtype=np.float64,
+        )
         self.motion_only_mode = self.gripper_dim == 0
 
         self.state = DemoState.RESET
@@ -456,6 +469,7 @@ class BrickPickDemo:
         arm_joint_origins = [joint_origins[joint_name] for joint_name in self.training_config.arm_joints]
 
         shoulder_position = np.array(arm_joint_origins[0], dtype=np.float64)
+        shoulder_position += np.array(self.training_config.robot_root_position, dtype=np.float64)
         chain_reach = float(
             sum(np.linalg.norm(origin) for origin in arm_joint_origins[1:])
             + np.linalg.norm(self.tuning.wrist_to_grasp_translation)
@@ -464,10 +478,10 @@ class BrickPickDemo:
         radial_min = max(0.12, 0.18 * chain_reach)
 
         table_clearance = self.scene.scene_config.table_height + (self.scene.scene_config.brick_scale[2] / 2.0) + 0.01
-        x_min = shoulder_position[0] - 0.18
-        x_max = shoulder_position[0] + 0.12
-        y_min = shoulder_position[1] + 0.14
-        y_max = shoulder_position[1] + min(radial_max * 0.95, 0.46)
+        x_min = shoulder_position[0] + 0.14
+        x_max = shoulder_position[0] + min(radial_max * 0.95, 0.46)
+        y_min = shoulder_position[1] - 0.18
+        y_max = shoulder_position[1] + 0.12
         z_min = table_clearance
         z_max = shoulder_position[2] + 0.10
 

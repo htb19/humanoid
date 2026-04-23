@@ -8,11 +8,12 @@ Example commands:
   show
   deg
   rad
-  home
+  home    # all-zero URDF joint pose
+  ready   # configured bent-arm ready pose used by demo/training resets
   quit
 
 Example pose input:
-  0 0 0 1.2 -0.6 0  0 0 0 1.2 -0.6 0
+  0 0 0 -1.2 0.6 0  0 0 0 1.2 -0.6 0
 """
 
 from __future__ import annotations
@@ -69,7 +70,7 @@ def load_robot(robot_description_path: Path) -> RobotTrainingConfig:
 
 
 def create_scene(training_config: RobotTrainingConfig, headless: bool) -> HumanoidBrickPickDemoScene:
-    return HumanoidBrickPickDemoScene(training_config=training_config, headless=headless)
+    return HumanoidBrickPickDemoScene(training_config=training_config, headless=headless, setup_cameras=False)
 
 
 def get_target_joint_indices(scene: HumanoidBrickPickDemoScene) -> list[int]:
@@ -110,6 +111,13 @@ def print_end_effector_poses(scene: HumanoidBrickPickDemoScene) -> None:
     print("[check_pose] right ee quaternion_wxyz", np.round(right_pose.quaternion_wxyz, 4).tolist())
     print("[check_pose] left ee position", np.round(left_pose.position, 4).tolist())
     print("[check_pose] left ee quaternion_wxyz", np.round(left_pose.quaternion_wxyz, 4).tolist())
+
+
+def hold_current_joint_positions(scene: HumanoidBrickPickDemoScene) -> None:
+    joint_positions = np.array(scene.articulation.get_joint_positions(), dtype=np.float64)
+    scene.articulation.set_joint_velocities(np.zeros_like(joint_positions))
+    scene.articulation.apply_action(scene._ArticulationAction(joint_positions=joint_positions))
+    print("[check_pose] holding imported joint positions", np.round(joint_positions, 4).tolist())
 
 
 def apply_pose(
@@ -182,10 +190,15 @@ def interactive_loop(scene: HumanoidBrickPickDemoScene, training_config: RobotTr
     joint_limits = get_joint_limits(training_config)
     input_mode = "rad"
     home_pose = np.zeros(len(ARM_JOINT_NAMES), dtype=np.float64)
+    ready_pose = np.array(
+        [training_config.home_joint_positions.get(joint_name, 0.0) for joint_name in ARM_JOINT_NAMES],
+        dtype=np.float64,
+    )
 
+    print("[check_pose] startup mode: applying initial training pose (ready pose)")
+    print("[check_pose] command 'home' applies all-zero joints; command 'ready' applies demo/training ready pose")
+    apply_pose(scene, target_indices, ready_pose)
     print_joint_names(scene, target_indices)
-    print_joint_state(scene, target_indices)
-    print_end_effector_poses(scene)
     print("[check_pose] input mode: rad")
 
     running = True
@@ -219,6 +232,9 @@ def interactive_loop(scene: HumanoidBrickPickDemoScene, training_config: RobotTr
         if command == "home":
             apply_pose(scene, target_indices, home_pose)
             continue
+        if command == "ready":
+            apply_pose(scene, target_indices, ready_pose)
+            continue
 
         values = parse_pose_values(command, input_mode)
         if values is None:
@@ -232,7 +248,7 @@ def run_check_pose(robot_description_path: Path, headless: bool) -> None:
     try:
         training_config = load_robot(robot_description_path)
         scene = create_scene(training_config=training_config, headless=headless)
-        scene.reset_scene()
+        hold_current_joint_positions(scene)
         interactive_loop(scene, training_config)
     finally:
         if scene is not None:
