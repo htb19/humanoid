@@ -1,0 +1,19 @@
+dataset:
+  path: "data/imitation_converted/dataset.npz"
+  use_images: false
+
+model:
+  input_dim: null
+  action_dim: 16
+  hidden_dim: 256
+  num_layers: 3
+
+training:
+  output_dir: "data/imitation_runs/bc_state"
+  batch_size: 128
+  epochs: 50
+  learning_rate: 0.001
+  weight_decay: 0.000001
+  val_fraction: 0.15
+  seed: 7
+  device: "auto"
