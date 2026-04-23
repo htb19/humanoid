@@ -187,7 +187,8 @@ public:
 
             tf2::Quaternion q_current;
             tf2::fromMsg(target_pose.pose.orientation, q_current);
-            q = (q_current * q).normalize();
+            // q = (q_current * q).normalize();// 本地系
+            q = (q * q_current ).normalize();// 世界系
 
             target_pose.pose.orientation.x = q.getX();
             target_pose.pose.orientation.y = q.getY();
