@@ -94,10 +94,10 @@
     <axis
       xyz="0 1 0" />
     <limit
-      lower="-3.14"
-      upper="3.14"
-      effort="20"
-      velocity="50" />
+      lower="-1.5707963267949"
+      upper="1.5707963267949"
+      effort="50"
+      velocity="12.5663706143592" />
   </joint>
   <link
     name="neck_yaw_link">
@@ -152,10 +152,10 @@
     <axis
       xyz="1 0 0" />
     <limit
-      lower="-3.14"
-      upper="3.14"
-      effort="20"
-      velocity="50" />
+      lower="-0.785398163397448"
+      upper="1.5707963267949"
+      effort="50"
+      velocity="12.5663706143592" />
   </joint>
   <link
     name="head_camera_link">
@@ -263,10 +263,10 @@
     <axis
       xyz="0 0 1" />
     <limit
-      lower="-3.14"
-      upper="3.14"
-      effort="20"
-      velocity="50" />
+      lower="-1.83259571459405"
+      upper="1.22173047639603"
+      effort="50"
+      velocity="12.5663706143592" />
   </joint>
   <link
     name="right_shoulder_roll_link">
@@ -321,10 +321,10 @@
     <axis
       xyz="0 0 1" />
     <limit
-      lower="-3.14"
-      upper="3.14"
-      effort="20"
-      velocity="50" />
+      lower="-1.5707963267949"
+      upper="0.0174532925199433"
+      effort="50"
+      velocity="12.5663706143592" />
   </joint>
   <link
     name="right_shoulder_yaw_link">
@@ -379,10 +379,10 @@
     <axis
       xyz="0 0 1" />
     <limit
-      lower="-3.14"
-      upper="3.14"
-      effort="20"
-      velocity="50" />
+      lower="-2.61799387799149"
+      upper="2.61799387799149"
+      effort="50"
+      velocity="12.5663706143592" />
   </joint>
   <link
     name="right_elbow_pitch_link">
@@ -553,10 +553,10 @@
     <axis
       xyz="0 0 -1" />
     <limit
-      lower="-3.14"
-      upper="3.14"
-      effort="20"
-      velocity="50" />
+      lower="-2.0943951023932"
+      upper="2.0943951023932"
+      effort="50"
+      velocity="12.5663706143592" />
   </joint>
   <link
     name="right_gripper1_link">
@@ -609,7 +609,66 @@
     <child
       link="right_gripper1_link" />
     <axis
-      xyz="-1 0 0" />
+      xyz="1 0 0" />
+    <limit
+      lower="-0.03"
+      upper="0"
+      effort="20"
+      velocity="50" />
+  </joint>
+  <link
+    name="right_gripper2_link">
+    <inertial>
+      <origin
+        xyz="0.0596503865175193 0.0019659579201895 0.0221271099610874"
+        rpy="0 0 0" />
+      <mass
+        value="0.0393551869062514" />
+      <inertia
+        ixx="1.98397159910276E-05"
+        ixy="1.49583238832345E-07"
+        ixz="2.6160400152461E-06"
+        iyy="1.54499686755966E-05"
+        iyz="-4.68723727640429E-07"
+        izz="9.3435573957773E-06" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://robot_description/meshes/right_gripper2_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.0980392156862745 0.0980392156862745 0.0980392156862745 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://robot_description/meshes/right_gripper2_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="right_gripper2_joint"
+    type="prismatic">
+    <origin
+      xyz="0 0.141000000000003 -0.0424999999999999"
+      rpy="1.5707963267949 0 3.14159265358979" />
+    <parent
+      link="right_wrist_yaw_link" />
+    <child
+      link="right_gripper2_link" />
+    <axis
+      xyz="1 0 0" />
+    <mimic joint="right_gripper1_joint" multiplier="-1.0" />
     <limit
       lower="-0.03"
       upper="0"
@@ -781,10 +840,10 @@
     <axis
       xyz="0 0 1" />
     <limit
-      lower="-3.14"
-      upper="3.14"
-      effort="20"
-      velocity="50" />
+      lower="-1.22173047639603"
+      upper="1.83259571459405"
+      effort="50"
+      velocity="12.5663706143592" />
   </joint>
   <link
     name="left_shoulder_roll_link">
@@ -839,10 +898,10 @@
     <axis
       xyz="0 0 1" />
     <limit
-      lower="-3.14"
-      upper="3.14"
-      effort="20"
-      velocity="50" />
+      lower="-0.0174532925199433"
+      upper="1.5707963267949"
+      effort="50"
+      velocity="12.5663706143592" />
   </joint>
   <link
     name="left_shoulder_yaw_link">
@@ -897,10 +956,10 @@
     <axis
       xyz="0 0 1" />
     <limit
-      lower="-3.14"
-      upper="3.14"
-      effort="20"
-      velocity="50" />
+      lower="-2.61799387799149"
+      upper="2.61799387799149"
+      effort="50"
+      velocity="12.5663706143592" />
   </joint>
   <link
     name="left_elbow_pitch_link">
@@ -1071,10 +1130,10 @@
     <axis
       xyz="0 0 -1" />
     <limit
-      lower="-3.14"
-      upper="3.14"
-      effort="20"
-      velocity="50" />
+      lower="-2.0943951023932"
+      upper="2.0943951023932"
+      effort="50"
+      velocity="12.5663706143592" />
   </joint>
   <link
     name="left_gripper1_link">
@@ -1131,6 +1190,65 @@
     <limit
       lower="0"
       upper="0.03"
+      effort="50"
+      velocity="20" />
+  </joint>
+  <link
+    name="left_gripper2_link">
+    <inertial>
+      <origin
+        xyz="-0.0593992496111781 -0.00197501295200414 0.0245167055289283"
+        rpy="0 0 0" />
+      <mass
+        value="0.0354366119716677" />
+      <inertia
+        ixx="1.96844205449425E-05"
+        ixy="1.49584437236235E-07"
+        ixz="-2.61603389629978E-06"
+        iyy="1.51761628338051E-05"
+        iyz="4.68724850359594E-07"
+        izz="8.9529027072796E-06" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://robot_description/meshes/left_gripper2_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.0980392156862745 0.0980392156862745 0.0980392156862745 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://robot_description/meshes/left_gripper2_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="left_gripper2_joint"
+    type="prismatic">
+    <origin
+      xyz="0 0.14099995082628 -0.0425000000000004"
+      rpy="1.5707963267949 0 -3.14159265358979" />
+    <parent
+      link="left_wrist_yaw_link" />
+    <child
+      link="left_gripper2_link" />
+    <axis
+      xyz="-1 0 0" />
+    <mimic joint="left_gripper1_joint" multiplier="-1.0" />
+    <limit
+      lower="-0.03"
+      upper="0"
       effort="20"
       velocity="50" />
   </joint>
