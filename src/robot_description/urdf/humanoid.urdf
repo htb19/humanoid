@@ -94,10 +94,10 @@
     <axis
       xyz="0 1 0" />
     <limit
-      lower="-3.14"
-      upper="3.14"
-      effort="20"
-      velocity="50" />
+      lower="-1.5707963267949"
+      upper="1.5707963267949"
+      effort="50"
+      velocity="12.5663706143592" />
   </joint>
   <link
     name="neck_yaw_link">
@@ -152,10 +152,10 @@
     <axis
       xyz="1 0 0" />
     <limit
-      lower="-3.14"
-      upper="3.14"
-      effort="20"
-      velocity="50" />
+      lower="-0.785398163397448"
+      upper="1.5707963267949"
+      effort="50"
+      velocity="12.5663706143592" />
   </joint>
   <link
     name="head_camera_link">
@@ -263,10 +263,10 @@
     <axis
       xyz="0 0 1" />
     <limit
-      lower="-3.14"
-      upper="3.14"
-      effort="20"
-      velocity="50" />
+      lower="-1.83259571459405"
+      upper="1.22173047639603"
+      effort="50"
+      velocity="12.5663706143592" />
   </joint>
   <link
     name="right_shoulder_roll_link">
@@ -321,10 +321,10 @@
     <axis
       xyz="0 0 1" />
     <limit
-      lower="-3.14"
-      upper="3.14"
-      effort="20"
-      velocity="50" />
+      lower="-1.5707963267949"
+      upper="0.0174532925199433"
+      effort="50"
+      velocity="12.5663706143592" />
   </joint>
   <link
     name="right_shoulder_yaw_link">
@@ -379,10 +379,10 @@
     <axis
       xyz="0 0 1" />
     <limit
-      lower="-3.14"
-      upper="3.14"
-      effort="20"
-      velocity="50" />
+      lower="-2.61799387799149"
+      upper="2.61799387799149"
+      effort="50"
+      velocity="12.5663706143592" />
   </joint>
   <link
     name="right_elbow_pitch_link">
@@ -435,12 +435,12 @@
     <child
       link="right_elbow_pitch_link" />
     <axis
-      xyz="0 0 -1" />
+      xyz="0 0 1" />
     <limit
-      lower="-3.14"
-      upper="3.14"
-      effort="20"
-      velocity="50" />
+      lower="-1.5707963267949"
+      upper="0.0174532925199433"
+      effort="50"
+      velocity="12.5663706143592" />
   </joint>
   <link
     name="right_wrist_pitch_link">
@@ -493,12 +493,12 @@
     <child
       link="right_wrist_pitch_link" />
     <axis
-      xyz="0 0 -1" />
+      xyz="0 0 1" />
     <limit
-      lower="-3.14"
-      upper="3.14"
-      effort="20"
-      velocity="50" />
+      lower="-2.96705972839036"
+      upper="2.96705972839036"
+      effort="50"
+      velocity="12.5663706143592" />
   </joint>
   <link
     name="right_wrist_yaw_link">
@@ -551,12 +551,12 @@
     <child
       link="right_wrist_yaw_link" />
     <axis
-      xyz="0 0 -1" />
+      xyz="0 0 1" />
     <limit
-      lower="-3.14"
-      upper="3.14"
-      effort="20"
-      velocity="50" />
+      lower="-2.0943951023932"
+      upper="2.0943951023932"
+      effort="50"
+      velocity="12.5663706143592" />
   </joint>
   <link
     name="right_gripper1_link">
@@ -602,19 +602,19 @@
     name="right_gripper1_joint"
     type="prismatic">
     <origin
-      xyz="0 0.141 -0.0425"
-      rpy="1.5708 0 3.1416" />
+      xyz="0 0.141000000000003 -0.0424999999999999"
+      rpy="1.5707963267949 0 3.14159265358979" />
     <parent
       link="right_wrist_yaw_link" />
     <child
       link="right_gripper1_link" />
     <axis
-      xyz="-1 0 0" />
+      xyz="1 0 0" />
     <limit
-      lower="-0.03"
-      upper="0"
-      effort="20"
-      velocity="50" />
+      lower="0"
+      upper="0.03"
+      effort="50"
+      velocity="20" />
   </joint>
   <link
     name="right_camera_link">
@@ -720,13 +720,13 @@
     <child
       link="right_gripper2_link" />
     <axis
-      xyz="-1 0 0" />
+      xyz="1 0 0" />
     <mimic joint="right_gripper1_joint" multiplier="-1.0" />
     <limit
-      lower="0"
-      upper="0.03"
-      effort="20"
-      velocity="50" />
+      lower="-0.03"
+      upper="0"
+      effort="50"
+      velocity="20" />
   </joint>
   <link
     name="left_base_pitch_link">
@@ -781,10 +781,10 @@
     <axis
       xyz="0 0 1" />
     <limit
-      lower="-3.14"
-      upper="3.14"
-      effort="20"
-      velocity="50" />
+      lower="-1.22173047639603"
+      upper="1.83259571459405"
+      effort="50"
+      velocity="12.5663706143592" />
   </joint>
   <link
     name="left_shoulder_roll_link">
@@ -839,10 +839,10 @@
     <axis
       xyz="0 0 1" />
     <limit
-      lower="-3.14"
-      upper="3.14"
-      effort="20"
-      velocity="50" />
+      lower="-0.0174532925199433"
+      upper="1.5707963267949"
+      effort="50"
+      velocity="12.5663706143592" />
   </joint>
   <link
     name="left_shoulder_yaw_link">
@@ -897,10 +897,10 @@
     <axis
       xyz="0 0 1" />
     <limit
-      lower="-3.14"
-      upper="3.14"
-      effort="20"
-      velocity="50" />
+      lower="-2.61799387799149"
+      upper="2.61799387799149"
+      effort="50"
+      velocity="12.5663706143592" />
   </joint>
   <link
     name="left_elbow_pitch_link">
@@ -955,10 +955,10 @@
     <axis
       xyz="0 0 1" />
     <limit
-      lower="-3.14"
-      upper="3.14"
-      effort="20"
-      velocity="50" />
+      lower="-0.0174532925199433"
+      upper="1.5707963267949"
+      effort="50"
+      velocity="12.5663706143592" />
   </joint>
   <link
     name="left_wrist_pitch_link">
@@ -1013,10 +1013,10 @@
     <axis
       xyz="0 0 1" />
     <limit
-      lower="-3.14"
-      upper="3.14"
-      effort="20"
-      velocity="50" />
+      lower="-2.96705972839036"
+      upper="2.96705972839036"
+      effort="50"
+      velocity="12.5663706143592" />
   </joint>
   <link
     name="left_wrist_yaw_link">
@@ -1071,16 +1071,16 @@
     <axis
       xyz="0 0 -1" />
     <limit
-      lower="-3.14"
-      upper="3.14"
-      effort="20"
-      velocity="50" />
+      lower="-2.0943951023932"
+      upper="2.0943951023932"
+      effort="50"
+      velocity="12.5663706143592" />
   </joint>
   <link
     name="left_gripper1_link">
     <inertial>
       <origin
-        xyz="0.0648785249788183 0.000993464182677262 0.0233298932977575"
+        xyz="-0.0648785249788183 -0.000993464182677262 0.0233298932977575"
         rpy="0 0 0" />
       <mass
         value="0.0375646671073411" />
@@ -1120,8 +1120,8 @@
     name="left_gripper1_joint"
     type="prismatic">
     <origin
-      xyz="0 -0.141 0.0425"
-      rpy="-1.5708 0 3.1416" />
+      xyz="0 -0.14099995082628 0.0425000000000004"
+      rpy="-1.5707963267949 0 3.14159265358979" />
     <parent
       link="left_wrist_yaw_link" />
     <child
@@ -1131,8 +1131,8 @@
     <limit
       lower="0"
       upper="0.03"
-      effort="20"
-      velocity="50" />
+      effort="50"
+      velocity="20" />
   </joint>
   <link
     name="left_camera_link">
@@ -1243,7 +1243,32 @@
     <limit
       lower="-0.03"
       upper="0"
-      effort="20"
-      velocity="50" />
+      effort="50"
+      velocity="20" />
   </joint>
+
+    <!-- 右手机械臂末端工具系坐标系 -->
+    <link name="right_tcp_link" />
+    <joint
+        name="right_tcp_joint"
+        type="fixed">
+        <origin
+            xyz="0 0.141000000000003 -0.0424999999999999"
+            rpy="1.5707963267949 0 3.14159265358979" />
+        <parent link="right_wrist_yaw_link" />
+        <child link="right_tcp_link"/>
+    </joint>
+    
+    <!-- 左手机械臂末端工具系坐标系 -->
+    <link name="left_tcp_link" />
+    <joint
+        name="left_tcp_joint"
+        type="fixed">
+        <origin
+            xyz="0 -0.14099995082628 0.0425000000000004"
+            rpy="-1.5707963267949 0 3.14159265358979" />
+        <parent link="left_wrist_yaw_link" />     
+        <child link="left_tcp_link"/>
+    </joint>
+
 </robot>

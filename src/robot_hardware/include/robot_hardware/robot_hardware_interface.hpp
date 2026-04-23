@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <cmath>
+#include <cstdint>
 
 #include "hardware_interface/system_interface.hpp"
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
@@ -110,6 +111,7 @@ private:
     std::unordered_set<int> virtual_joints_;
     // ── 已使用的 CAN 通道列表（去重，configure 时确定）───────────────────────
     std::vector<int> used_channels_;
+    bool hardware_fault_ = false;
     // ── 硬件信息（on_init 时保存，用于 getParam）───────────────────────────
     hardware_interface::HardwareInfo hw_info_;
 

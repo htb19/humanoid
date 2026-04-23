@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="camera_optical_link">
+    
+    <!-- 头部相机 -->
+    <link name="head_camera_optical_link">
+      <collision>
+        <origin xyz="0 0 0.0001" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.0001 0.0001 0.0001"/>
+        </geometry>
+      </collision>
+    </link>
+    <joint
+      name="head_camera_optical_joint"
+      type="fixed">
+      <parent link="head_camera_link"/>
+      <child link="head_camera_optical_link"/>
+      <origin xyz="0 0 0" rpy="-1.57079632679 0.0 -1.57079632679"/>
+    </joint>
+    
+    <!-- 右手相机 -->
+    <link name="right_camera_optical_link">
+      <collision>
+        <geometry>
+          <box size="0.0001 0.0001 0.0001"/>
+        </geometry>
+      </collision>
+    </link>
+    <joint
+      name="right_camera_optical_joint"
+      type="fixed">
+      <parent link="right_camera_link"/>
+      <child link="right_camera_optical_link"/>
+      <origin xyz="0 0 0" rpy="0 1.57079632679 0"/>
+    </joint>
+    
+    <!-- 左手相机 -->
+    <link name="left_camera_optical_link">
+      <collision>
+        <geometry>
+          <box size="0.0001 0.0001 0.0001"/>
+        </geometry>
+      </collision>
+    </link>
+    <joint
+      name="left_camera_optical_joint"
+      type="fixed">
+      <parent link="left_camera_link"/>
+      <child link="left_camera_optical_link"/>
+      <origin xyz="0 0 0" rpy="-1.57079632679 0 -1.57079632679"/>
+    </joint>
+
+  </xacro:macro>
+</robot>

@@ -21,8 +21,12 @@ install(
 add_executable(commander src/commander_node.cpp)
 ament_target_dependencies(commander rclcpp moveit_ros_planning_interface example_interfaces robot_interfaces tf2_geometry_msgs)
 
+add_executable(move_to_pose_init src/move_to_pose_init_node.cpp)
+ament_target_dependencies(move_to_pose_init rclcpp moveit_ros_planning_interface)
+
 install(TARGETS 
   commander
+  move_to_pose_init
   DESTINATION lib/${PROJECT_NAME}/
 )
 
