@@ -1,8 +1,8 @@
 # Default initial positions for humanoid's ros2_control fake system
 
 initial_positions:
-  left_base_pitch_joint: 0
-  left_elbow_pitch_joint: 0
+  left_base_pitch_joint: 0.2
+  left_elbow_pitch_joint: 1.0
   left_gripper1_joint: 0.005
   left_shoulder_roll_joint: 0
   left_shoulder_yaw_joint: 0
@@ -10,8 +10,8 @@ initial_positions:
   left_wrist_yaw_joint: 0
   neck_pitch_joint: 0
   neck_yaw_joint: 0
-  right_base_pitch_joint: 0
-  right_elbow_pitch_joint: 0
+  right_base_pitch_joint: -0.2
+  right_elbow_pitch_joint: -1.0
   right_gripper1_joint: 0.005
   right_shoulder_roll_joint: 0
   right_shoulder_yaw_joint: 0

@@ -219,8 +219,6 @@ HumanoidRobotHardware::on_activate(const rclcpp_lifecycle::State & /*previous_st
     RCLCPP_INFO(rclcpp::get_logger("HumanoidRobotHardware"), "on_activate");
 
     hardware_fault_ = false;
-    fault_joint_index_ = -1;
-    fault_error_code_ = 0;
 
     // if (!mgr_->enableAll())
     // {
@@ -420,8 +418,6 @@ void HumanoidRobotHardware::drainFeedback(int channel)
         if (fb.has_error || fb.error_code != 0)
         {
             hardware_fault_ = true;
-            fault_joint_index_ = idx;
-            fault_error_code_ = fb.error_code;
 
             RCLCPP_ERROR_THROTTLE(
                 rclcpp::get_logger("HumanoidRobotHardware"),

@@ -30,7 +30,6 @@ planning_frame: base_link
 
 ## Frames
 ee_frame_name: left_tcp_link
-# robot_link_command_frame: base_link
 robot_link_command_frame: base_link
 
 ## Stopping behaviour
@@ -38,9 +37,9 @@ incoming_command_timeout: 0.1
 num_outgoing_halt_msgs_to_publish: 4
 
 ## Singularity & joint limits
-lower_singularity_threshold: 17.0
-hard_stop_singularity_threshold: 30.0
-joint_limit_margin: 0.15
+lower_singularity_threshold: 25.0
+hard_stop_singularity_threshold: 45.0
+joint_limit_margin: 0.10
 leaving_singularity_threshold_multiplier: 1.5
 
 ## Topic names

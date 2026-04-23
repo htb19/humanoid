@@ -63,12 +63,12 @@
         <joint name="right_wrist_yaw_joint" value="0"/>
     </group_state>
     <group_state name="Pose_init" group="right_arm">
-        <joint name="right_base_pitch_joint" value="0.2"/>
-        <joint name="right_elbow_pitch_joint" value="-0.4"/>
-        <joint name="right_shoulder_roll_joint" value="-0.4"/>
-        <joint name="right_shoulder_yaw_joint" value="1.0"/>
-        <joint name="right_wrist_pitch_joint" value="1.0"/>
-        <joint name="right_wrist_yaw_joint" value="1.0"/>
+        <joint name="right_base_pitch_joint" value="-0.2"/>
+        <joint name="right_elbow_pitch_joint" value="-1.0"/>
+        <joint name="right_shoulder_roll_joint" value="0"/>
+        <joint name="right_shoulder_yaw_joint" value="0"/>
+        <joint name="right_wrist_pitch_joint" value="0"/>
+        <joint name="right_wrist_yaw_joint" value="0"/>
     </group_state>
     <group_state name="Home" group="left_arm">
         <joint name="left_base_pitch_joint" value="0"/>
@@ -80,11 +80,11 @@
     </group_state>
     <group_state name="Pose_init" group="left_arm">
         <joint name="left_base_pitch_joint" value="0.2"/>
-        <joint name="left_elbow_pitch_joint" value="-0.4"/>
-        <joint name="left_shoulder_roll_joint" value="-0.4"/>
-        <joint name="left_shoulder_yaw_joint" value="1.0"/>
-        <joint name="left_wrist_pitch_joint" value="1.0"/>
-        <joint name="left_wrist_yaw_joint" value="1.0"/>
+        <joint name="left_elbow_pitch_joint" value="1.0"/>
+        <joint name="left_shoulder_roll_joint" value="0"/>
+        <joint name="left_shoulder_yaw_joint" value="0"/>
+        <joint name="left_wrist_pitch_joint" value="0"/>
+        <joint name="left_wrist_yaw_joint" value="0"/>
     </group_state>
     <group_state name="Gripper_closed" group="left_gripper">
         <joint name="left_gripper1_joint" value="0.03"/>

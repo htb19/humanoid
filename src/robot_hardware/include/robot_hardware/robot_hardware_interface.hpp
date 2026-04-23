@@ -112,8 +112,6 @@ private:
     // ── 已使用的 CAN 通道列表（去重，configure 时确定）───────────────────────
     std::vector<int> used_channels_;
     bool hardware_fault_ = false;
-    int fault_joint_index_ = -1;
-    uint16_t fault_error_code_ = 0;
     // ── 硬件信息（on_init 时保存，用于 getParam）───────────────────────────
     hardware_interface::HardwareInfo hw_info_;
 
