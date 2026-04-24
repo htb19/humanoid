@@ -1,0 +1,10 @@
+replay:
+  ros__parameters:
+    execute_on_robot: false
+    dry_run_print_limit: 20
+    rate_hz: 10.0
+    left_joint_command_topic: "/left_joint_command"
+    right_joint_command_topic: "/right_joint_command"
+    neck_joint_command_topic: "/neck_joint_command"
+    left_gripper_topic: "/open_left_gripper"
+    right_gripper_topic: "/open_right_gripper"

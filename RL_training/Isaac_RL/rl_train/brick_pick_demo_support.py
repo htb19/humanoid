@@ -120,9 +120,15 @@ def materialize_lula_robot_description(training_config: RobotTrainingConfig) -> 
     for joint_name in all_actuated:
         if joint_name in training_config.arm_joints:
             continue
-        fixed_rules.append(f"  - {{name: {joint_name}, rule: fixed, value: 0.0}}")
+        fixed_value = training_config.home_joint_positions.get(
+            joint_name, training_config.closed_gripper_positions.get(joint_name, 0.0)
+        )
+        fixed_rules.append(f"  - {{name: {joint_name}, rule: fixed, value: {fixed_value:.6f}}}")
 
-    default_q = ", ".join("0.0" for _ in training_config.arm_joints)
+    default_q = ", ".join(
+        f"{training_config.home_joint_positions.get(joint_name, 0.0):.6f}"
+        for joint_name in training_config.arm_joints
+    )
     accel_limits = ", ".join("20.0" for _ in training_config.arm_joints)
     jerk_limits = ", ".join("200.0" for _ in training_config.arm_joints)
     lines = [
@@ -152,11 +158,11 @@ def materialize_lula_robot_description(training_config: RobotTrainingConfig) -> 
 class DemoSceneConfig:
     physics_dt: float = 1.0 / 60.0
     control_dt: float = 1.0 / 30.0
-    table_position: tuple[float, float, float] = (0.14, 0.64, 0.28)
-    table_scale: tuple[float, float, float] = (0.72, 0.56, 0.06)
-    brick_position: tuple[float, float, float] = (0.16, 0.56, 0.355)
+    table_position: tuple[float, float, float] = (0.48, -0.24, 0.28)
+    table_scale: tuple[float, float, float] = (0.70, 0.50, 0.06)
+    brick_position: tuple[float, float, float] = (0.42, -0.28, 0.355)
     brick_scale: tuple[float, float, float] = (0.08, 0.04, 0.05)
-    place_position: tuple[float, float, float] = (0.04, 0.56, 0.355)
+    place_position: tuple[float, float, float] = (0.42, -0.14, 0.355)
 
     @property
     def table_height(self) -> float:
@@ -173,9 +179,10 @@ class MountedCameraSpec:
 
 
 class HumanoidBrickPickDemoScene:
-    def __init__(self, training_config: RobotTrainingConfig, headless: bool) -> None:
+    def __init__(self, training_config: RobotTrainingConfig, headless: bool, setup_cameras: bool = True) -> None:
         self.training_config = training_config
         self.headless = headless
+        self.setup_cameras = setup_cameras
         self.scene_config = DemoSceneConfig()
         self._app = get_simulation_app(headless)
         self._modules = load_isaac_modules()
@@ -246,18 +253,21 @@ class HumanoidBrickPickDemoScene:
         print("[demo] source URDF:", self.training_config.urdf_path)
         verify_runtime_urdf(self.training_config.runtime_urdf_path)
         self.robot_prim_path = import_urdf(self.training_config.runtime_urdf_path)
+        self.robot_prim = self._get_prim_at_path(self.robot_prim_path)
 
         self.articulation = self.world.scene.add(
             self._SingleArticulation(prim_path=self.robot_prim_path, name="humanoid")
         )
         self.world.reset()
         self.articulation.initialize()
+        self.set_robot_root_pose()
 
         self.dof_names = list(self.articulation.dof_names)
         self.arm_indices = [self.dof_names.index(name) for name in self.training_config.arm_joints]
         self.gripper_indices = [self.dof_names.index(name) for name in self.training_config.gripper_joints]
         self.arm_lower, self.arm_upper = self._build_arm_bounds()
-        self.setup_onboard_cameras()
+        if self.setup_cameras:
+            self.setup_onboard_cameras()
 
         self.base_prim = self._get_prim_at_path(f"{self.robot_prim_path}/base_link")
         self.ee_prim = self._get_prim_at_path(f"{self.robot_prim_path}/{self.training_config.end_effector_link}")
@@ -271,7 +281,7 @@ class HumanoidBrickPickDemoScene:
         self.kinematics.set_default_position_tolerance(0.005)
         self.kinematics.set_default_orientation_tolerance(0.08)
         self.kinematics.set_default_cspace_seeds(
-            np.array([np.zeros(len(self.training_config.arm_joints), dtype=np.float64)], dtype=np.float64)
+            np.array([self.home_arm_positions()], dtype=np.float64)
         )
 
     def _camera_prim_path(self, spec: MountedCameraSpec) -> str:
@@ -590,8 +600,31 @@ class HumanoidBrickPickDemoScene:
         full_target[self.gripper_indices] = np.array(gripper_target, dtype=np.float64)
         self.articulation.apply_action(self._ArticulationAction(joint_positions=full_target))
 
+    def set_robot_root_pose(self) -> None:
+        root_position = np.array(self.training_config.robot_root_position, dtype=np.float32)
+        if hasattr(self.articulation, "set_world_pose"):
+            self.articulation.set_world_pose(position=root_position)
+            return
+        self._UsdGeom.XformCommonAPI(self.robot_prim).SetTranslate(tuple(float(v) for v in root_position))
+
+    def home_arm_positions(self) -> np.ndarray:
+        return np.array(
+            [
+                self.training_config.home_joint_positions.get(joint_name, 0.0)
+                for joint_name in self.training_config.arm_joints
+            ],
+            dtype=np.float64,
+        )
+
     def set_robot_home(self) -> None:
         full_positions = np.zeros(len(self.dof_names), dtype=np.float64)
+        for joint_name, value in self.training_config.home_joint_positions.items():
+            if joint_name in self.dof_names:
+                full_positions[self.dof_names.index(joint_name)] = float(value)
+        for joint_name, value in self.training_config.open_gripper_positions.items():
+            if joint_name in self.dof_names:
+                full_positions[self.dof_names.index(joint_name)] = float(value)
+        self.set_robot_root_pose()
         self.articulation.set_joint_positions(full_positions)
         self.articulation.set_joint_velocities(np.zeros(len(self.dof_names), dtype=np.float64))
         self.articulation.apply_action(self._ArticulationAction(joint_positions=full_positions))
@@ -599,6 +632,7 @@ class HumanoidBrickPickDemoScene:
     def reset_scene(self) -> None:
         self.world.reset()
         self.articulation.initialize()
+        self.set_robot_root_pose()
         self.set_robot_home()
         self.brick.set_world_pose(position=np.array(self.scene_config.brick_position, dtype=np.float32))
         self.brick.set_linear_velocity(np.zeros(3, dtype=np.float32))
