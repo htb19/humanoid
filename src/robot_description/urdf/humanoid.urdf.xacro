@@ -3,6 +3,7 @@
     <xacro:arg name="initial_positions_file" default="$(find robot_description)/config/initial_positions.yaml" />
     <xacro:arg name="use_gazebo" default="false"/>
     <xacro:arg name="use_simulation" default="false"/>
+    <xacro:arg name="use_fake_hw" default="false"/>
 
     <!-- Import humanoid urdf file -->
     <xacro:include filename="humanoid.urdf" />

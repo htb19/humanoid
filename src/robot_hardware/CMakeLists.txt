@@ -18,6 +18,7 @@ add_library(
   ${PROJECT_NAME}
   SHARED
   src/robot_hardware_interface.cpp
+  src/sim_robot_hardware_interface.cpp
 )
 
 ament_target_dependencies(${PROJECT_NAME}
@@ -52,4 +53,3 @@ ament_export_dependencies(
 )
 
 ament_package()
-

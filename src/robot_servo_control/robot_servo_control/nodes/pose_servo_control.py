@@ -47,7 +47,7 @@ class PoseServoControl(Node):
             "/right_servo/moveit_servo/start_servo",
         )
         self.declare_parameter("command_frame", "base_link")
-        self.declare_parameter("linear_speed", 0.05)
+        self.declare_parameter("linear_speed", 0.1)
         self.declare_parameter("angular_speed", 0.3)
         self.declare_parameter("publish_rate", 20.0)
         self.declare_parameter("command_timeout", 0.2)

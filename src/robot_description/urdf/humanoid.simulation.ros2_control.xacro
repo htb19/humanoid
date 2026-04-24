@@ -5,14 +5,19 @@
 
         <ros2_control name="${name}" type="system">
             <hardware>
-                <!-- By default, set up controllers for simulation. This won't work on real hardware -->
-                <plugin>mock_components/GenericSystem</plugin>
-                <!-- <plugin>robot_hardware/HumanoidRobotHardware</plugin>
-                <param name="lib_path">/home/htb/human_ws/src/robot_hardware/lib/libcontrolcanfd.so</param>
-                <param name="device_type">USBCANFD_200U</param>
-                <param name="device_index">0</param>
-                <param name="abit_baud">1000000</param> -->
-                <param name="dbit_baud">5000000</param>
+                <xacro:if value="$(arg use_fake_hw)">
+                    <plugin>robot_hardware/SimHumanoidHardware</plugin>
+                    <param name="simulate_following">false</param>
+                    <param name="position_lag_alpha">0.25</param>
+                    <param name="max_follow_count_per_cycle">50</param>
+                    <param name="enable_fault_on_large_delta">true</param>
+                    <param name="max_delta_count_per_write">100</param>
+                    <param name="return_error_on_fault">false</param>
+                    <param name="log_state_transitions">false</param>
+                </xacro:if>
+                <xacro:unless value="$(arg use_fake_hw)">
+                    <plugin>mock_components/GenericSystem</plugin>
+                </xacro:unless>
             </hardware>
             <joint name="right_base_pitch_joint">
                 <!-- <param name="dev_id">7</param>
@@ -178,4 +183,3 @@
         </ros2_control>
     </xacro:macro>
 </robot>
-

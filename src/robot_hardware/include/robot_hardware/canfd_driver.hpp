@@ -286,13 +286,16 @@ public:
 
         recv_run_flag_[channel].store(true);
 
+        // ========== 调试版本 1：先用普通调度测试 ==========
+        // 注释掉实时调度，用默认 SCHED_OTHER
         pthread_attr_t attr;
         pthread_attr_init(&attr);
-        pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
-        struct sched_param param;
-        param.sched_priority = 80;//设置优先级
-        pthread_attr_setschedparam(&attr, &param);
-        pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
+        
+        // pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
+        // struct sched_param param;
+        // param.sched_priority = 80;//设置优先级
+        // pthread_attr_setschedparam(&attr, &param);
+        // pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
 
         auto *arg = new ThreadArg{this, channel};
         if (pthread_create(&recv_threads_[channel], &attr, recvThread, arg) != 0)

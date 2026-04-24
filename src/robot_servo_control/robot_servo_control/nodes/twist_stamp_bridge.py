@@ -53,12 +53,10 @@ class TwistStampBridge(Node):
         self.declare_parameter("depth", 10)
         self.declare_parameter("wait_service_timeout_sec", 100.0)
         self.declare_parameter("log_interval_sec", 2.0)
-        self.declare_parameter("stale_timeout_sec", 0.2)
         self.declare_parameter("expected_frame_id", "base_link")
         self.declare_parameter("enforce_frame_id", True)
         self.declare_parameter("max_linear_speed", 1.2)
         self.declare_parameter("max_angular_speed", 2.5)
-        self.declare_parameter("zero_publish_repeats", 3)
 
         # =========================
         # 参数读取（类型安全）
@@ -131,11 +129,6 @@ class TwistStampBridge(Node):
             .get_parameter_value()
             .double_value
         )
-        self.stale_timeout_sec: float = (
-            self.get_parameter("stale_timeout_sec")
-            .get_parameter_value()
-            .double_value
-        )
         self.expected_frame_id: str = (
             self.get_parameter("expected_frame_id")
             .get_parameter_value()
@@ -155,11 +148,6 @@ class TwistStampBridge(Node):
             self.get_parameter("max_angular_speed")
             .get_parameter_value()
             .double_value
-        )
-        self.zero_publish_repeats: int = (
-            self.get_parameter("zero_publish_repeats")
-            .get_parameter_value()
-            .integer_value
         )
 
         # =========================
@@ -191,8 +179,6 @@ class TwistStampBridge(Node):
         self.right_count: int = 0
         self.left_reject_count: int = 0
         self.right_reject_count: int = 0
-        self.left_zero_count: int = 0
-        self.right_zero_count: int = 0
         self.left_last_recv_time = None
         self.right_last_recv_time = None
         self.left_last_forward_time = None
@@ -203,10 +189,6 @@ class TwistStampBridge(Node):
         self.right_last_linear_norm: float = 0.0
         self.left_last_angular_norm: float = 0.0
         self.right_last_angular_norm: float = 0.0
-        self.left_zero_remaining: int = 0
-        self.right_zero_remaining: int = 0
-        self.left_stale_active: bool = False
-        self.right_stale_active: bool = False
 
         self.get_logger().info("TwistStampBridge starting...")
         self.get_logger().info(
@@ -215,12 +197,10 @@ class TwistStampBridge(Node):
         )
         self.get_logger().info(
             "Guard rails: "
-            f"stale_timeout={self.stale_timeout_sec:.3f}s, "
             f"expected_frame_id='{self.expected_frame_id}', "
             f"enforce_frame_id={self.enforce_frame_id}, "
             f"max_linear_speed={self.max_linear_speed:.3f}, "
-            f"max_angular_speed={self.max_angular_speed:.3f}, "
-            f"zero_publish_repeats={self.zero_publish_repeats}"
+            f"max_angular_speed={self.max_angular_speed:.3f}"
         )
 
         # =========================
@@ -356,8 +336,6 @@ class TwistStampBridge(Node):
         self.left_last_frame_id = out.header.frame_id
         self.left_last_linear_norm = self.vector_norm(out.twist.linear)
         self.left_last_angular_norm = self.vector_norm(out.twist.angular)
-        self.left_zero_remaining = self.zero_publish_repeats
-        self.left_stale_active = False
 
     def right_cb(self, msg: TwistStamped) -> None:
         if self.right_pub is None:
@@ -376,69 +354,17 @@ class TwistStampBridge(Node):
         self.right_last_frame_id = out.header.frame_id
         self.right_last_linear_norm = self.vector_norm(out.twist.linear)
         self.right_last_angular_norm = self.vector_norm(out.twist.angular)
-        self.right_zero_remaining = self.zero_publish_repeats
-        self.right_stale_active = False
 
     def log_status(self) -> None:
-        self.check_stale_inputs()
-
         self.get_logger().info(
             "bridge alive | "
             f"left forwarded={self.left_count} rejected={self.left_reject_count} "
-            f"zero={self.left_zero_count} frame={self.left_last_frame_id or '-'} "
+            f"frame={self.left_last_frame_id or '-'} "
             f"lin={self.left_last_linear_norm:.3f} ang={self.left_last_angular_norm:.3f} | "
             f"right forwarded={self.right_count} rejected={self.right_reject_count} "
-            f"zero={self.right_zero_count} frame={self.right_last_frame_id or '-'} "
+            f"frame={self.right_last_frame_id or '-'} "
             f"lin={self.right_last_linear_norm:.3f} ang={self.right_last_angular_norm:.3f}"
         )
-
-    def check_stale_inputs(self) -> None:
-        now = self.get_clock().now()
-
-        if self.enable_left and self.left_pub is not None:
-            self.handle_stale_hand(
-                tag="left",
-                publisher=self.left_pub,
-                last_recv_time=self.left_last_recv_time,
-                now=now,
-            )
-
-        if self.enable_right and self.right_pub is not None:
-            self.handle_stale_hand(
-                tag="right",
-                publisher=self.right_pub,
-                last_recv_time=self.right_last_recv_time,
-                now=now,
-            )
-
-    def handle_stale_hand(self, tag: str, publisher, last_recv_time, now) -> None:
-        if last_recv_time is None:
-            return
-
-        elapsed = (now - last_recv_time).nanoseconds * 1e-9
-        if elapsed <= self.stale_timeout_sec:
-            return
-
-        stale_flag_attr = f"{tag}_stale_active"
-        zero_remaining_attr = f"{tag}_zero_remaining"
-        last_forward_attr = f"{tag}_last_forward_time"
-        zero_count_attr = f"{tag}_zero_count"
-
-        if not getattr(self, stale_flag_attr):
-            self.get_logger().warn(
-                f"[{tag}] input stale for {elapsed:.3f}s, publishing zero twist",
-                throttle_duration_sec=1.0,
-            )
-            setattr(self, stale_flag_attr, True)
-
-        zero_remaining = getattr(self, zero_remaining_attr)
-        if zero_remaining <= 0:
-            return
-
-        publisher.publish(self.build_zero_msg())
-        setattr(self, zero_remaining_attr, zero_remaining - 1)
-        setattr(self, last_forward_attr, now)
-        setattr(self, zero_count_attr, getattr(self, zero_count_attr) + 1)
 
     def validate_and_build_output(
         self,
@@ -485,12 +411,6 @@ class TwistStampBridge(Node):
         out.header.stamp = self.get_clock().now().to_msg()
         out.header.frame_id = frame_id
         out.twist = msg.twist
-        return out
-
-    def build_zero_msg(self) -> TwistStamped:
-        out = TwistStamped()
-        out.header.stamp = self.get_clock().now().to_msg()
-        out.header.frame_id = self.expected_frame_id
         return out
 
     @staticmethod

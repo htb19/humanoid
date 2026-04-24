@@ -262,9 +262,9 @@ class KeyboardServoControl(Node):
 
     def key_to_joint_command(self, key: str) -> Optional[JointCommand]:
         if key == "w":
-            return JointCommand("head", "neck_yaw_joint", self.head_joint_speed)
-        if key == "s":
             return JointCommand("head", "neck_yaw_joint", -self.head_joint_speed)
+        if key == "s":
+            return JointCommand("head", "neck_yaw_joint", self.head_joint_speed)
         if key == "a":
             return JointCommand("head", "neck_pitch_joint", self.head_joint_speed)
         if key == "d":

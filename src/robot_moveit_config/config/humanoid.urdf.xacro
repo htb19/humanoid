@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="humanoid">
     <xacro:arg name="initial_positions_file" default="initial_positions.yaml" />
+    <xacro:arg name="use_fake_hw" default="false" />
 
     <!-- Import humanoid urdf file -->
     <xacro:include filename="$(find robot_description)/urdf/humanoid.urdf" />

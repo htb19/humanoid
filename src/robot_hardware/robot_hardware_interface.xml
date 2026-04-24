@@ -6,4 +6,11 @@
             Hardware interface for a humanoid_robot
         </description>
     </class>
+    <class  name="robot_hardware/SimHumanoidHardware"
+            type="robot_hardware::SimHumanoidHardware"
+            base_class_type="hardware_interface::SystemInterface">
+        <description>
+            Simulation-only hardware interface that preserves motor count encoding for debugging.
+        </description>
+    </class>
 </library>

@@ -101,7 +101,7 @@ public class DualXRServo_ReferenceFrameIncremental : MonoBehaviour
             binding: "<XRController>{RightHand}/primaryButton"
         );
 
-        Time.fixedDeltaTime = 0.01f;   // 100Hz
+        Time.fixedDeltaTime = 0.05f;   // 20Hz
     }
 
     private void Start()
@@ -288,6 +288,8 @@ public class DualXRServo_ReferenceFrameIncremental : MonoBehaviour
 
         Vector3 rosLinear = ConvertUnityLinearVectorToRos(hand.currentLinearRef);
         Vector3 rosAngular = ConvertUnityAngularVectorToRos(hand.currentAngularRef);
+        // Vector3 rosLinear = new Vector3(0, 0, 0);
+        // Vector3 rosAngular =  new Vector3(0, 0, 0.3f);
 
         if (verboseLog)
         {
@@ -355,8 +357,8 @@ public class DualXRServo_ReferenceFrameIncremental : MonoBehaviour
     private Vector3 ConvertUnityLinearVectorToRos(Vector3 unityVec)
     {
         return new Vector3(
-            unityVec.x,
             unityVec.z,
+            -unityVec.x,
             unityVec.y
         );
     }
@@ -364,8 +366,8 @@ public class DualXRServo_ReferenceFrameIncremental : MonoBehaviour
     private Vector3 ConvertUnityAngularVectorToRos(Vector3 unityVec)
     {
         return new Vector3(
-            -unityVec.x,
             -unityVec.z,
+            unityVec.x,
             -unityVec.y
         );
     }
