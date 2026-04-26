@@ -150,10 +150,10 @@
     <child
       link="neck_yaw_link" />
     <axis
-      xyz="1 0 0" />
+      xyz="-1 0 0" />
     <limit
-      lower="-0.785398163397448"
-      upper="1.5707963267949"
+      lower="-1.5707963267949"
+      upper="0.785398163397448"
       effort="50"
       velocity="12.5663706143592" />
   </joint>
