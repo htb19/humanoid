@@ -49,12 +49,9 @@ private:
     {
         int32_t actual_count = 0;
         int32_t target_count = 0;
-        int32_t prev_target_count = 0;
         double actual_rad = 0.0;
         double prev_actual_rad = 0.0;
         double velocity_rad_s = 0.0;
-        uint16_t error_code = 0;
-        bool has_error = false;
     };
 
     std::string getParam(
@@ -83,10 +80,16 @@ private:
     bool simulate_following_ = false;
     double position_lag_alpha_ = 1.0;
     int max_follow_count_per_cycle_ = 100;
-    bool enable_fault_on_large_delta_ = true;
-    int max_delta_count_per_write_ = 100;
-    bool return_error_on_fault_ = false;
-    bool log_state_transitions_ = false;
+
+    // 轨迹整形
+    bool enable_trajectory_shaping_ = true;
+    int max_vel_cnt_per_cycle_ = 100;
+    std::vector<double> last_hw_cmd_;
+
+    // 误差监控阈值
+    int warning_cnt_threshold_ = 50;
+    int dangerous_cnt_threshold_ = 70;
+    int emergency_cnt_threshold_ = 90;
 
     bool hardware_fault_ = false;
     rclcpp::Clock::SharedPtr clock_;

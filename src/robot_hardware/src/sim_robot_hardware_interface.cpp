@@ -11,7 +11,6 @@ namespace robot_hardware
 {
 namespace
 {
-constexpr double kCountScale = 32768.0;
 constexpr double kMinPeriodSec = 1e-6;
 }  // namespace
 
@@ -33,11 +32,11 @@ SimHumanoidHardware::on_init(const hardware_interface::HardwareInfo &info)
     simulate_following_ = getParamBool("simulate_following", false);
     position_lag_alpha_ = getParamDouble("position_lag_alpha", 1.0);
     max_follow_count_per_cycle_ = getParamInt("max_follow_count_per_cycle", 100);
-    enable_fault_on_large_delta_ =
-        getParamBool("enable_fault_on_large_delta", true);
-    max_delta_count_per_write_ = getParamInt("max_delta_count_per_write", 100);
-    return_error_on_fault_ = getParamBool("return_error_on_fault", false);
-    log_state_transitions_ = getParamBool("log_state_transitions", false);
+    enable_trajectory_shaping_ = getParamBool("enable_trajectory_shaping", true);
+    max_vel_cnt_per_cycle_    = getParamInt("max_vel_cnt_per_cycle", 100);
+    warning_cnt_threshold_    = getParamInt("warning_cnt_threshold", 50);
+    dangerous_cnt_threshold_  = getParamInt("dangerous_cnt_threshold", 70);
+    emergency_cnt_threshold_  = getParamInt("emergency_cnt_threshold", 90);
 
     if (position_lag_alpha_ < 0.0)
         position_lag_alpha_ = 0.0;
@@ -45,12 +44,13 @@ SimHumanoidHardware::on_init(const hardware_interface::HardwareInfo &info)
         position_lag_alpha_ = 1.0;
     if (max_follow_count_per_cycle_ < 1)
         max_follow_count_per_cycle_ = 1;
-    if (max_delta_count_per_write_ < 1)
-        max_delta_count_per_write_ = 1;
+    if (max_vel_cnt_per_cycle_ < 1)
+        max_vel_cnt_per_cycle_ = 1;
 
     hw_pos_.assign(n_joints_, 0.0);
     hw_vel_.assign(n_joints_, 0.0);
     hw_cmd_.assign(n_joints_, 0.0);
+    last_hw_cmd_.assign(n_joints_, 0.0);
     sim_motors_.assign(n_joints_, SimMotorState{});
 
     clock_ = std::make_shared<rclcpp::Clock>(RCL_STEADY_TIME);
@@ -58,15 +58,13 @@ SimHumanoidHardware::on_init(const hardware_interface::HardwareInfo &info)
     RCLCPP_INFO(
         rclcpp::get_logger("SimHumanoidHardware"),
         "on_init: %d joints simulate_following=%s lag_alpha=%.3f "
-        "max_follow_count_per_cycle=%d max_delta_count_per_write=%d "
-        "fault_on_large_delta=%s return_error_on_fault=%s",
+        "max_follow=%d shaping=%s max_vel=%d cnt",
         n_joints_,
         simulate_following_ ? "true" : "false",
         position_lag_alpha_,
         max_follow_count_per_cycle_,
-        max_delta_count_per_write_,
-        enable_fault_on_large_delta_ ? "true" : "false",
-        return_error_on_fault_ ? "true" : "false");
+        enable_trajectory_shaping_ ? "true" : "false",
+        max_vel_cnt_per_cycle_);
 
     return hardware_interface::CallbackReturn::SUCCESS;
 }
@@ -86,7 +84,6 @@ SimHumanoidHardware::on_configure(const rclcpp_lifecycle::State & /*previous_sta
         SimMotorState state;
         state.actual_count = initial_count;
         state.target_count = initial_count;
-        state.prev_target_count = initial_count;
         state.actual_rad = positionCountToRad_(initial_count);
         state.prev_actual_rad = state.actual_rad;
         sim_motors_[i] = state;
@@ -108,16 +105,14 @@ SimHumanoidHardware::on_activate(const rclcpp_lifecycle::State & /*previous_stat
     for (int i = 0; i < n_joints_; ++i)
     {
         SimMotorState &state = sim_motors_[i];
-        state.has_error = false;
-        state.error_code = 0;
         state.actual_count = positionRadToCount_(hw_cmd_[i]);
         state.target_count = state.actual_count;
-        state.prev_target_count = state.actual_count;
         state.actual_rad = positionCountToRad_(state.actual_count);
         state.prev_actual_rad = state.actual_rad;
         state.velocity_rad_s = 0.0;
         hw_pos_[i] = state.actual_rad;
         hw_vel_[i] = 0.0;
+        last_hw_cmd_[i] = hw_cmd_[i];
     }
 
     return hardware_interface::CallbackReturn::SUCCESS;
@@ -197,60 +192,58 @@ SimHumanoidHardware::read(const rclcpp::Time & /*time*/, const rclcpp::Duration 
 
         hw_pos_[i] = state.actual_rad;
         hw_vel_[i] = state.velocity_rad_s;
+
+        const int32_t error_cnt =
+            std::abs(state.target_count - state.actual_count);
+        if (error_cnt >= emergency_cnt_threshold_)
+            RCLCPP_ERROR_THROTTLE(
+                rclcpp::get_logger("SimHumanoidHardware"),
+                *clock_, 2000,
+                "EMERGENCY: joint='%s' target=%d actual=%d error=%d cnt",
+                hw_info_.joints[i].name.c_str(),
+                state.target_count, state.actual_count, error_cnt);
+        else if (error_cnt >= dangerous_cnt_threshold_)
+            RCLCPP_WARN_THROTTLE(
+                rclcpp::get_logger("SimHumanoidHardware"),
+                *clock_, 1000,
+                "DANGEROUS: joint='%s' target=%d actual=%d error=%d cnt",
+                hw_info_.joints[i].name.c_str(),
+                state.target_count, state.actual_count, error_cnt);
+        else if (error_cnt >= warning_cnt_threshold_)
+            RCLCPP_WARN_THROTTLE(
+                rclcpp::get_logger("SimHumanoidHardware"),
+                *clock_, 500,
+                "WARNING: joint='%s' target=%d actual=%d error=%d cnt",
+                hw_info_.joints[i].name.c_str(),
+                state.target_count, state.actual_count, error_cnt);
     }
 
-    if (hardware_fault_ && return_error_on_fault_)
+    if (hardware_fault_)
         return hardware_interface::return_type::ERROR;
 
     return hardware_interface::return_type::OK;
 }
 
 hardware_interface::return_type
-SimHumanoidHardware::write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
+SimHumanoidHardware::write(const rclcpp::Time &, const rclcpp::Duration &)
 {
     for (int i = 0; i < n_joints_; ++i)
     {
-        SimMotorState &state = sim_motors_[i];
-        state.prev_target_count = state.target_count;
-        state.target_count = positionRadToCount_(hw_cmd_[i]);
-
-        const int32_t delta_count = state.target_count - state.prev_target_count;
-        if (enable_fault_on_large_delta_ &&
-            std::abs(delta_count) > max_delta_count_per_write_)
+        if (enable_trajectory_shaping_)
         {
-            state.has_error = true;
-            state.error_code = ERROR_OVERSPEED;
-            hardware_fault_ = true;
-
-            RCLCPP_ERROR_THROTTLE(
-                rclcpp::get_logger("SimHumanoidHardware"),
-                *clock_, 1000,
-                "Sim motor fault: joint='%s' cmd_rad=%.6f target_count=%d "
-                "prev_target_count=%d delta_count=%d limit=%d error_code=0x%04X",
-                hw_info_.joints[i].name.c_str(),
-                hw_cmd_[i],
-                state.target_count,
-                state.prev_target_count,
-                delta_count,
-                max_delta_count_per_write_,
-                state.error_code);
+            const double delta = hw_cmd_[i] - last_hw_cmd_[i];
+            const int32_t delta_cnt = positionRadToCount_(delta);
+            if (delta_cnt < -max_vel_cnt_per_cycle_)
+                hw_cmd_[i] = last_hw_cmd_[i] - positionCountToRad_(max_vel_cnt_per_cycle_);
+            else if (delta_cnt > max_vel_cnt_per_cycle_)
+                hw_cmd_[i] = last_hw_cmd_[i] + positionCountToRad_(max_vel_cnt_per_cycle_);
         }
-
-        if (log_state_transitions_ && state.target_count != state.prev_target_count)
-        {
-            RCLCPP_INFO(
-                rclcpp::get_logger("SimHumanoidHardware"),
-                "Sim target update: joint='%s' cmd_rad=%.6f target_count=%d delta_count=%d",
-                hw_info_.joints[i].name.c_str(),
-                hw_cmd_[i],
-                state.target_count,
-                delta_count);
-        }
+        sim_motors_[i].target_count = positionRadToCount_(hw_cmd_[i]);
+        last_hw_cmd_[i] = hw_cmd_[i];
     }
 
-    if (hardware_fault_ && return_error_on_fault_)
+    if (hardware_fault_)
         return hardware_interface::return_type::ERROR;
-
     return hardware_interface::return_type::OK;
 }
 
@@ -376,17 +369,12 @@ double SimHumanoidHardware::parseInitialPositionRad_(int joint_idx) const
 
 int32_t SimHumanoidHardware::positionRadToCount_(double rad)
 {
-    const double raw = rad * kCountScale / M_PI;
-    if (raw > static_cast<double>(std::numeric_limits<int16_t>::max()))
-        return std::numeric_limits<int16_t>::max();
-    if (raw < static_cast<double>(std::numeric_limits<int16_t>::min()))
-        return std::numeric_limits<int16_t>::min();
-    return static_cast<int32_t>(static_cast<int16_t>(raw));
+    return radToCount(rad);
 }
 
 double SimHumanoidHardware::positionCountToRad_(int32_t count)
 {
-    return static_cast<double>(count) * M_PI / kCountScale;
+    return countToRad(count);
 }
 
 int32_t SimHumanoidHardware::signum_(int32_t value)

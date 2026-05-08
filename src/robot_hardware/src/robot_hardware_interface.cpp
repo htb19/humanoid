@@ -137,6 +137,17 @@ HumanoidRobotHardware::on_init(const hardware_interface::HardwareInfo &info)
     hw_pos_.assign(n_joints_, 0.0);
     hw_vel_.assign(n_joints_, 0.0);
     hw_cmd_.assign(n_joints_, 0.0);
+    last_hw_cmd_.assign(n_joints_, 0.0);
+
+    // 轨迹整形参数
+    enable_trajectory_shaping_ = getParamInt("enable_trajectory_shaping", 1) != 0;
+    max_vel_cnt_per_cycle_    = getParamInt("max_vel_cnt_per_cycle", 100);
+    sync_frame_count_         = getParamInt("sync_frame_count", 50);
+    sync_frame_period_ms_     = getParamInt("sync_frame_period_ms", 2);
+    warning_cnt_threshold_    = getParamInt("warning_cnt_threshold", 50);
+    dangerous_cnt_threshold_  = getParamInt("dangerous_cnt_threshold", 70);
+    emergency_cnt_threshold_  = getParamInt("emergency_cnt_threshold", 90);
+    if (max_vel_cnt_per_cycle_ < 1) max_vel_cnt_per_cycle_ = 1;
 
     clock_ = std::make_shared<rclcpp::Clock>(RCL_STEADY_TIME);
 
@@ -266,11 +277,17 @@ HumanoidRobotHardware::on_activate(const rclcpp_lifecycle::State & /*previous_st
         motor_idx++;
     }
 
-    // 以初始位置为目标，发送一帧 CSP 确保电机持仓不动
-    // hw_cmd_[k] 顺序与 addMotor 注册顺序一致（全局索引 k），
-    // sendMultiAxisCSP 内部通过 slot_to_global 自动取本通道各轴的值
-    for (int ch : used_channels_)
-        mgr_->sendMultiAxisCSP(ch, hw_cmd_.data());
+    // 初始化整形缓存
+    for (int k = 0; k < n_joints_; k++)
+        last_hw_cmd_[k] = hw_cmd_[k];
+
+    // 激活同步：连续发送当前位置 N 帧，同步 ROS cmd / 驱动器 target / 电机 actual
+    for (int n = 0; n < sync_frame_count_; n++)
+    {
+        for (int ch : used_channels_)
+            mgr_->sendMultiAxisCSP(ch, hw_cmd_.data());
+        std::this_thread::sleep_for(std::chrono::milliseconds(sync_frame_period_ms_));
+    }
 
     RCLCPP_INFO(rclcpp::get_logger("HumanoidRobotHardware"), "on_activate done.");
     return hardware_interface::CallbackReturn::SUCCESS;
@@ -344,6 +361,41 @@ HumanoidRobotHardware::read(const rclcpp::Time & /*time*/, const rclcpp::Duratio
 {
     for (int ch : used_channels_)
         drainFeedback(ch);
+
+    // 误差监控 (仅实体关节)
+    for (int k = 0; k < n_joints_; k++)
+    {
+        if (virtual_joints_.count(k))
+            continue;
+        const int32_t actual_cnt = radToCount(hw_pos_[k]);
+        const int32_t target_cnt = radToCount(hw_cmd_[k]);
+        const int32_t error_cnt = std::abs(target_cnt - actual_cnt);
+        if (error_cnt >= emergency_cnt_threshold_)
+        {
+            hardware_fault_ = true;
+            
+            RCLCPP_ERROR_THROTTLE(
+                rclcpp::get_logger("HumanoidRobotHardware"),
+                *clock_, 2000,
+                "EMERGENCY: joint='%s' target=%d actual=%d error=%d cnt",
+                hw_info_.joints[k].name.c_str(),
+                target_cnt, actual_cnt, error_cnt);
+        }
+        else if (error_cnt >= dangerous_cnt_threshold_)
+            RCLCPP_WARN_THROTTLE(
+                rclcpp::get_logger("HumanoidRobotHardware"),
+                *clock_, 1000,
+                "DANGEROUS: joint='%s' target=%d actual=%d error=%d cnt",
+                hw_info_.joints[k].name.c_str(),
+                target_cnt, actual_cnt, error_cnt);
+        else if (error_cnt >= warning_cnt_threshold_)
+            RCLCPP_WARN_THROTTLE(
+                rclcpp::get_logger("HumanoidRobotHardware"),
+                *clock_, 500,
+                "WARNING: joint='%s' target=%d actual=%d error=%d cnt",
+                hw_info_.joints[k].name.c_str(),
+                target_cnt, actual_cnt, error_cnt);
+    }
 
     // 虚拟关节无 PDO 反馈，直接将命令值透传为状态值
     for (int k : virtual_joints_)
@@ -444,6 +496,22 @@ HumanoidRobotHardware::write(const rclcpp::Time & /*time*/, const rclcpp::Durati
     if (hardware_fault_)
         return hardware_interface::return_type::ERROR;
 
+    // 轨迹整形 (原地修改 hw_cmd_)
+    if (enable_trajectory_shaping_)
+    {
+        for (int k = 0; k < n_joints_; k++)
+        {
+            if (virtual_joints_.count(k))
+                continue;
+            const double delta = hw_cmd_[k] - last_hw_cmd_[k];
+            const int32_t delta_cnt = radToCount(delta);
+            if (delta_cnt < -max_vel_cnt_per_cycle_)
+                hw_cmd_[k] = last_hw_cmd_[k] - countToRad(max_vel_cnt_per_cycle_);
+            else if (delta_cnt > max_vel_cnt_per_cycle_)
+                hw_cmd_[k] = last_hw_cmd_[k] + countToRad(max_vel_cnt_per_cycle_);
+        }
+    }
+
     for (int ch : used_channels_)
     {
         if (!mgr_->sendMultiAxisCSP(ch, hw_cmd_.data()))
@@ -454,6 +522,9 @@ HumanoidRobotHardware::write(const rclcpp::Time & /*time*/, const rclcpp::Durati
             return hardware_interface::return_type::ERROR;
         }
     }
+
+    for (int k = 0; k < n_joints_; k++)
+        last_hw_cmd_[k] = hw_cmd_[k];
 
     return hardware_interface::return_type::OK;
 }

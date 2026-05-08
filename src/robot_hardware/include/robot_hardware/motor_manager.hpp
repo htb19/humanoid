@@ -346,7 +346,7 @@ public:
     //                     下标与 addMotor() 注册顺序一致
     // @return true        发送成功
     // ============================================================    
-    bool sendMultiAxisCSP(int channel, const double *targets_rad)
+    bool sendMultiAxisCSP(const int channel, const double *targets_rad)
     {
         ChannelState &state = states_[channel];
 

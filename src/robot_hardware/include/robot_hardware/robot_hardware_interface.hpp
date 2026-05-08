@@ -105,6 +105,18 @@ private:
     std::vector<double>  hw_vel_;        ///< 当前关节速度（rad/s）
     std::vector<double>  hw_cmd_;        ///< 目标关节位置（rad）
 
+    // ── 轨迹整形 ────────────────────────────────────────────────────────
+    bool                 enable_trajectory_shaping_ = true;
+    int                  max_vel_cnt_per_cycle_ = 100;
+    std::vector<double>  last_hw_cmd_;
+    // ── 激活同步 ────────────────────────────────────────────────────────
+    int                  sync_frame_count_ = 50;
+    int                  sync_frame_period_ms_ = 2;
+    // ── 误差监控阈值 ─────────────────────────────────────────────────────
+    int                  warning_cnt_threshold_ = 50;
+    int                  dangerous_cnt_threshold_ = 70;
+    int                  emergency_cnt_threshold_ = 90;
+
     // ── dev_id → 关节索引 映射（用于 PDO 反馈归位）──────────────────────────
     std::unordered_map<int, int> devkey_to_joint_;
     // ── 虚拟关节索引集合 ──────────────────────────────────────────────────────

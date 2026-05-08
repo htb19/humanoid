@@ -29,6 +29,22 @@ enum class ControlMode : uint8_t
 };
 
 // ============================================================
+//  统一 rad ↔ encoder count 转换 (int16 量程)
+// ============================================================
+inline int32_t radToCount(double rad)
+{
+    const double raw = rad * 32768.0 / M_PI;
+    if (raw > 32767.0) return 32767;
+    if (raw < -32768.0) return -32768;
+    return static_cast<int32_t>(static_cast<int16_t>(raw));
+}
+
+inline double countToRad(int32_t count)
+{
+    return static_cast<double>(count) * M_PI / 32768.0;
+}
+
+// ============================================================
 //  电机反馈状态结构体
 // ============================================================
 struct MotorFeedback
