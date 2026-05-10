@@ -1,0 +1,5 @@
+int32 so3_sample_count 0
+float64 orientation_range_deg 0.0
+---
+bool success
+string message

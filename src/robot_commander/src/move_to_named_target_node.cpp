@@ -48,13 +48,16 @@ int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<rclcpp::Node>(
-    "move_to_pose_init",
-    rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true));
+  auto node = std::make_shared<rclcpp::Node>("move_to_named_target");
+
+  node->declare_parameter<std::string>("pose_name", "Home");
 
   rclcpp::executors::SingleThreadedExecutor executor;
   executor.add_node(node);
   std::thread spinner([&executor]() { executor.spin(); });
+
+  std::string pose_name;
+  node->get_parameter("pose_name", pose_name);
 
   bool success = false;
 
@@ -67,8 +70,8 @@ int main(int argc, char ** argv)
     left_arm->setMaxVelocityScalingFactor(1.0);
     left_arm->setMaxAccelerationScalingFactor(1.0);
 
-    const bool right_ok = moveToNamedTarget(node->get_logger(), right_arm, "right_arm", "Pose_init");
-    const bool left_ok = moveToNamedTarget(node->get_logger(), left_arm, "left_arm", "Pose_init");
+    const bool right_ok = moveToNamedTarget(node->get_logger(), right_arm, "right_arm", pose_name);
+    const bool left_ok = moveToNamedTarget(node->get_logger(), left_arm, "left_arm", pose_name);
     success = right_ok && left_ok;
   }
 

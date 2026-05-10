@@ -1,0 +1,41 @@
+workspace_quality_analyzer:
+  ros__parameters:
+    move_group_name: "right_arm"
+    ee_link: ""
+    base_frame: "base_link"
+    robot_description_param: "robot_description"
+
+    sphere_radius: 0.15
+    sample_shape: "sphere"
+    samples_per_dim: 11
+
+    ik_timeout: 0.02
+    state_wait_timeout: 2.0
+
+    sigma_min_warn: 0.05
+    sigma_min_bad: 0.02
+    condition_warn: 80.0
+    condition_bad: 200.0
+
+    joint_margin_warn: 0.08
+    joint_margin_bad: 0.03
+
+    q_distance_warn: 0.35
+    q_distance_bad: 0.65
+
+    sigma_min_good: 0.12
+    joint_margin_good: 0.20
+
+    so3_sample_count: 512
+    max_orientation_samples: 2197
+    orientation_range_deg: 30.0
+    orientation_scan_timeout: 30.0
+    orientation_shell_radius: 0.1
+    orientation_visual_axis: "z"
+    marker_scale: 1.2
+
+    csv_output_dir: "/home/htb/Desktop/human_ws/src/robot_workspace_quality_analyzer/output"
+    marker_topic: "/workspace_quality/markers"
+    best_pose_topic: "/workspace_quality/best_pose"
+    publish_markers: true
+    write_csv: false
