@@ -50,7 +50,7 @@ int main(int argc, char ** argv)
 
   auto node = std::make_shared<rclcpp::Node>("move_to_named_target");
 
-  node->declare_parameter<std::string>("pose_name", "Home");
+  node->declare_parameter<std::string>("pose_name", "Pose_init");
 
   rclcpp::executors::SingleThreadedExecutor executor;
   executor.add_node(node);
